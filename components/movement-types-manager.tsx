@@ -8,8 +8,8 @@ import {
   TableHeader,
   TableRow,
 } from "./ui/table";
-import { Button } from "./ui/button";
 import { createClient } from "@/lib/supabase/server";
+import Link from "next/link";
 
 export default async function MovementTypesManager() {
   const supabase = await createClient();
@@ -50,12 +50,18 @@ export default async function MovementTypesManager() {
                 </TableCell>
                 <TableCell>
                   <div className="flex gap-2">
-                    <Button className="hover:bg-blue-400 hover:text-white transition-colors duration-300 h-10 w-10">
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button className="hover:bg-red-500 hover:text-white transition-colors duration-300 h-10 w-10">
-                      <TrashIcon className="" />
-                    </Button>
+                    <Link
+                      className="flex justify-center items-center rounded-md hover:bg-blue-500 hover:text-white transition-colors duration-300 h-10 w-10"
+                      href={`/protected/movement-types/edit/${item.id}`}
+                    >
+                      <Pencil className="h-6 w-6" />
+                    </Link>
+                    <Link
+                      className="flex justify-center items-center rounded-md hover:bg-red-500 hover:text-white transition-colors duration-300 h-10 w-10"
+                      href={`/protected/movement-types/delete/${item.id}`}
+                    >
+                      <TrashIcon className="h-6 w-6" />
+                    </Link>
                   </div>
                 </TableCell>
               </TableRow>

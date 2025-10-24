@@ -4,7 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { Home, User, Activity, DollarSign, ChevronDown, Shapes } from "lucide-react";
+import { Home, User, Activity, DollarSign, Shapes, ChevronLeft } from "lucide-react";
 
 const navItems: { label: string; href: string; icon: React.ReactNode }[] = [
   {
@@ -36,8 +36,8 @@ export default function Sidebar() {
   return (
     <aside
       className={cn(
-        "transition-all duration-200 shrink-0 bg-card border-r border-border",
-        open ? "w-64" : "w-16"
+        "transition-all duration-500 shrink-0 bg-card border-r border-border rounded-md",
+        open ? "w-64" : "w-20"
       )}
     >
       <div className="h-full flex flex-col">
@@ -48,7 +48,7 @@ export default function Sidebar() {
                 className={cn("text-foreground", open ? "w-6 h-6" : "w-5 h-5")}
               />
             </div>
-            {open && <span className="font-semibold">OwnMonetaryApp</span>}
+            {<span className={cn("font-semibold truncate", open ? "mx-auto" : "sr-only")}>OwnMonetaryApp</span>}
           </div>
 
           <button
@@ -56,7 +56,7 @@ export default function Sidebar() {
             onClick={() => setOpen((s) => !s)}
             className="p-1 rounded hover:bg-accent/10"
           >
-            <ChevronDown />
+            <ChevronLeft className={cn("w-5 h-5 transition-all duration-300", open && "rotate-180")} />
           </button>
         </div>
 
@@ -76,7 +76,7 @@ export default function Sidebar() {
                   >
                     <span
                       className={cn(
-                        "text-muted-foreground flex-none",
+                        "text-muted-foreground flex-none transition-all duration-300",
                         open ? "" : "mx-auto"
                       )}
                     >
