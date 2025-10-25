@@ -6,11 +6,11 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "./ui/table";
+} from "@/components/ui/table";
 import Link from "next/link";
 import { getMovementTypes } from "@/lib/services/movement-types";
 
-export default async function MovementTypesManager() {
+export default async function MovementTypesTable() {
   const movementTypes = await getMovementTypes();
 
   return (
@@ -39,7 +39,10 @@ export default async function MovementTypesManager() {
                 </TableCell>
                 <TableCell>{movementType.description}</TableCell>
                 <TableCell>
-                  <div style={{ backgroundColor: movementType.color }} className="w-8 h-8 rounded-full"></div>
+                  <div
+                    style={{ backgroundColor: movementType.color }}
+                    className="w-8 h-8 rounded-full"
+                  ></div>
                 </TableCell>
                 <TableCell>
                   {new Date(movementType.created_at).toLocaleDateString()}

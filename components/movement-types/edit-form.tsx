@@ -2,11 +2,11 @@
 import { MovementType, movementTypeSchema } from "@/lib/schemas/movement-types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { Label } from "../ui/label";
 import z from "zod";
 import { updateMovementTypeClient as updateMovementType } from "@/lib/services/movement-types.client";
-import { Button } from "../ui/button";
-import { Input } from "../ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { revalidateMyDataAndRedirect } from "@/lib/services/revalidate";
 
 interface Props {

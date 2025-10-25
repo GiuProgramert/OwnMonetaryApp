@@ -1,0 +1,61 @@
+"use client";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Account, accountSchema } from "@/lib/schemas/accounts";
+import { updateAccount } from "@/lib/services/accounts.client";
+import { revalidateMyDataAndRedirect } from "@/lib/services/revalidate";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+
+interface Props {
+  initialValues: Account;
+}
+
+export default function EditAccountForm({ initialValues }: Props) {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+
+  } = useForm<z.infer<typeof accountSchema>>({
+    resolver: zodResolver(accountSchema),
+  });
+
+  const onSubmit = async (data: z.infer<typeof accountSchema>) => {
+    await updateAccount(initialValues.id, data);
+    revalidateMyDataAndRedirect("/protected/accounts");
+  };
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+      <div className="grid gap-2">
+        <Label htmlFor="name">Nombre</Label>
+        <Input
+          id="name"
+          {...register("name")}
+          defaultValue={initialValues.name}
+          className="bg-gray-600 border rounded-md p-2"
+        />
+        {errors.name && (
+          <p className="text-sm text-red-600">{errors.name.message}</p>
+        )}
+      </div>
+      <div className="grid gap-2">
+        <Label htmlFor="initial_balance">Saldo actual</Label>
+        <Input
+          id="initial_balance"
+          disabled
+          defaultValue={`Gs. ${initialValues.current_balance.toLocaleString("es-PY")}`}
+          className="bg-gray-600 border rounded-md p-2"
+        />
+      </div>
+      <div>
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? "Guardando..." : "Guardar"}
+        </Button>
+      </div>
+    </form>
+  );
+}
