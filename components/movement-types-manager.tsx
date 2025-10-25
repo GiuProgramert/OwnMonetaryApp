@@ -1,4 +1,3 @@
-import { MovementType } from "@/lib/types";
 import { Pencil, TrashIcon } from "lucide-react";
 import {
   Table,
@@ -8,57 +7,57 @@ import {
   TableHeader,
   TableRow,
 } from "./ui/table";
-import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
+import { getMovementTypes } from "@/lib/services/movement-types";
 
 export default async function MovementTypesManager() {
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("movement_types")
-    .select("id,name,description,created_at,updated_at")
-    .order("created_at", { ascending: false });
-
-  const items: MovementType[] = (data ?? []) as MovementType[];
+  const movementTypes = await getMovementTypes();
 
   return (
     <div className="space-y-2">
-      {items.length === 0 && (
+      {movementTypes.length === 0 && (
         <p className="text-sm text-muted-foreground">No hay tipos aún.</p>
       )}
 
-      {items.length > 0 && (
+      {movementTypes.length > 0 && (
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Nombre</TableHead>
               <TableHead>Descripción</TableHead>
+              <TableHead>Color</TableHead>
               <TableHead>Creado</TableHead>
               <TableHead>Actualizado</TableHead>
               <TableHead>Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {items.map((item) => (
-              <TableRow key={item.id}>
-                <TableCell>{item.name}</TableCell>
-                <TableCell>{item.description}</TableCell>
+            {movementTypes.map((movementType) => (
+              <TableRow key={movementType.id}>
+                <TableCell className="max-w-56 truncate">
+                  {movementType.name}
+                </TableCell>
+                <TableCell>{movementType.description}</TableCell>
                 <TableCell>
-                  {new Date(item.created_at).toLocaleDateString()}
+                  <div style={{ backgroundColor: movementType.color }} className="w-8 h-8 rounded-full"></div>
                 </TableCell>
                 <TableCell>
-                  {new Date(item.updated_at).toLocaleDateString()}
+                  {new Date(movementType.created_at).toLocaleDateString()}
+                </TableCell>
+                <TableCell>
+                  {new Date(movementType.updated_at).toLocaleDateString()}
                 </TableCell>
                 <TableCell>
                   <div className="flex gap-2">
                     <Link
                       className="flex justify-center items-center rounded-md hover:bg-blue-500 hover:text-white transition-colors duration-300 h-10 w-10"
-                      href={`/protected/movement-types/edit/${item.id}`}
+                      href={`/protected/movement-types/edit/${movementType.id}`}
                     >
                       <Pencil className="h-6 w-6" />
                     </Link>
                     <Link
                       className="flex justify-center items-center rounded-md hover:bg-red-500 hover:text-white transition-colors duration-300 h-10 w-10"
-                      href={`/protected/movement-types/delete/${item.id}`}
+                      href={`/protected/movement-types/delete/${movementType.id}`}
                     >
                       <TrashIcon className="h-6 w-6" />
                     </Link>
