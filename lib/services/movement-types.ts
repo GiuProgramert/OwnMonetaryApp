@@ -1,5 +1,6 @@
 import type { MovementType } from "@/lib/schemas/movement-types";
 import { createClient } from "@/lib/supabase/server";
+import { notFoundDetailMessage } from "../constants";
 
 export async function getMovementTypes() {
   const supabase = await createClient();
@@ -25,8 +26,12 @@ export async function getMovementTypeById(id: string) {
     .eq("id", id)
     .single();
 
-  if (error) {
+  if (error && error.details !== notFoundDetailMessage) {
     throw new Error(error.message);
+  }
+
+  if (error && error.details === notFoundDetailMessage) {
+    return null;
   }
 
   return data as MovementType;

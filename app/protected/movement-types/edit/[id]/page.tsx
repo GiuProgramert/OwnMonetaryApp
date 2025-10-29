@@ -1,6 +1,7 @@
 import EditMovementTypeForm from "@/components/movement-types/edit-form";
 import FormContainer from "@/components/form-container";
 import { getMovementTypeById } from "@/lib/services/movement-types";
+import { notFound } from "next/navigation";
 
 export default async function EditMovementTypePage({
   params,
@@ -9,6 +10,10 @@ export default async function EditMovementTypePage({
 }) {
   const { id } = await params;
   const movementType = await getMovementTypeById(id);
+
+  if (!movementType) {
+    notFound();
+  }
 
   return (
     <FormContainer

@@ -1,6 +1,5 @@
 import { z } from "zod";
-
-const hexColorRegex = /^#?([0-9a-fA-F]{3}){1,2}$/;
+import { hexColorRegex } from "@/lib/constants";
 
 export const movementTypeSchema = z.object({
   name: z

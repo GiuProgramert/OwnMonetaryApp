@@ -18,7 +18,6 @@ export default function EditAccountForm({ initialValues }: Props) {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-
   } = useForm<z.infer<typeof accountSchema>>({
     resolver: zodResolver(accountSchema),
   });
@@ -47,9 +46,33 @@ export default function EditAccountForm({ initialValues }: Props) {
         <Input
           id="initial_balance"
           disabled
-          defaultValue={`Gs. ${initialValues.current_balance.toLocaleString("es-PY")}`}
+          defaultValue={`Gs. ${initialValues.current_balance.toLocaleString(
+            "es-PY"
+          )}`}
           className="bg-gray-600 border rounded-md p-2"
         />
+      </div>
+      <div className="grid gap-2">
+        <Label htmlFor="color">Color</Label>
+        <div className="flex gap-2 w-full">
+          <Input
+            id="color"
+            type="color"
+            defaultValue={initialValues.color}
+            {...register("color")}
+            className="bg-gray-600 border rounded-md w-20 p-0"
+          />
+          <Input
+            id="color"
+            disabled
+            value={initialValues.color}
+            onChange={() => {}}
+            className="bg-gray-600 border rounded-md p-2"
+          />
+        </div>
+        {errors.color && (
+          <p className="text-sm text-red-600">{errors.color.message}</p>
+        )}
       </div>
       <div>
         <Button type="submit" disabled={isSubmitting}>

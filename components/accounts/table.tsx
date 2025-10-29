@@ -25,6 +25,7 @@ export default async function AccountsTable() {
             <TableRow>
               <TableHead>Nombre</TableHead>
               <TableHead>Saldo actual</TableHead>
+              <TableHead>Color</TableHead>
               <TableHead>Creado</TableHead>
               <TableHead>Actualizado</TableHead>
               <TableHead>Acciones</TableHead>
@@ -36,7 +37,15 @@ export default async function AccountsTable() {
                 <TableCell className="max-w-56 truncate">
                   {account.name}
                 </TableCell>
-                <TableCell>Gs. {account.current_balance.toLocaleString("es-PY")}</TableCell>
+                <TableCell>
+                  Gs. {account.current_balance.toLocaleString("es-PY")}
+                </TableCell>
+                <TableCell>
+                  <div
+                    style={{ backgroundColor: account.color }}
+                    className="w-8 h-8 rounded-full"
+                  ></div>
+                </TableCell>
                 <TableCell>
                   {new Date(account.created_at).toLocaleDateString()}
                 </TableCell>
