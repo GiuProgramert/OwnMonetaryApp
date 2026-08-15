@@ -36,9 +36,12 @@ After any client-side mutation, forms call `revalidateMyDataAndRedirect(path)` (
 
 Not-found lookups check `error.details === notFoundDetailMessage` (from `lib/constants.ts`) rather than the Postgrest error code, since Supabase's `.single()` error shape is matched by message text here.
 
-### Database triggers
+### Database triggers and RLS
 
-The schema has no versioned migrations in this repo — triggers and functions live only in Supabase. See [`docs/database.md`](docs/database.md) for what they do, the app-level rules they impose (never write `updated_at` or `current_balance` from the app, `movements.type` must be exactly `credit`/`debit`), and the balance-drift diagnostic/repair queries. Read it before touching `movements` or `accounts` balance logic.
+The schema has no versioned migrations in this repo — triggers, functions and RLS policies live only in Supabase. See [`docs/database.md`](docs/database.md) for:
+
+- **Triggers/functions** — what they do, the app-level rules they impose (never write `updated_at` or `current_balance` from the app, `movements.type` must be exactly `credit`/`debit`), and the balance-drift diagnostic/repair queries. Read it before touching `movements` or `accounts` balance logic.
+- **RLS** — the ownership model (`movements` has no `user_id`; ownership resolves through `accounts`), the policies, and the verification queries. RLS is the only security boundary: `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` ships in the browser bundle, so the `.eq("accounts.user_id", ...)` filters in `lib/services/*` are query convenience, not protection. Any new table needs RLS enabled plus a policy, and policies use `(select auth.uid())`, never bare `auth.uid()`.
 
 ### Auth & Supabase clients
 
