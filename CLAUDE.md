@@ -53,6 +53,7 @@ Routes under `app/protected/` are the authenticated app shell (sidebar + content
 
 ### Other conventions
 
+- Always use braces for `if` statements, including single-statement bodies — no one-line `if (x) doThing();` or brace-less multi-line `if`. Applies to all TS/TSX in this repo.
 - Path alias `@/*` maps to the repo root (see `tsconfig.json`).
 - shadcn/ui is configured with style `new-york`, base color `neutral`, no prefix (`components.json`); primitives live in `components/ui/`. `axios` is set up in `lib/axios/index.ts` with `NEXT_PUBLIC_BASE_URL` as base but is not currently used by the CRUD services above (they call Supabase directly).
 - Currency values are formatted with `toLocaleString("es-PY")` and a `Gs.` prefix (Paraguayan guaraní).

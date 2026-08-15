@@ -1,4 +1,5 @@
 import Sidebar from "@/components/sidebar";
+import { Toaster } from "react-hot-toast";
 
 export default function ProtectedLayout({
   children,
@@ -7,6 +8,7 @@ export default function ProtectedLayout({
 }) {
   return (
     <main className="min-h-screen flex flex-col items-center">
+      <Toaster position="top-right" />
       <div className="flex-1 w-full flex flex-col gap-6 items-center">
         <div className="w-full">
           <div className="w-full min-h-screen mx-auto flex gap-6 p-5">

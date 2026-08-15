@@ -25,6 +25,7 @@ export async function updateAccount(id: string, params: Partial<Account>) {
 }
 
 export async function createAccount(params: createAccount) {
+  console.log("Creating account with params:", params);
   const supabase = createBrowserClient();
   const parsed = accountSchema.safeParse(params);
 

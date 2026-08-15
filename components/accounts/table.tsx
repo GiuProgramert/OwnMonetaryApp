@@ -55,6 +55,7 @@ export default async function AccountsTable() {
                 </TableCell>
                 <TableCell>
                   <div className="flex gap-2">
+                    {/* TODO: link "ver movimientos" a /protected/movements?accountId=... */}
                     <Link
                       className="flex justify-center items-center rounded-md hover:bg-blue-500 hover:text-white transition-colors duration-300 h-10 w-10"
                       href={`/protected/accounts/edit/${account.id}`}
