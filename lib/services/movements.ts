@@ -127,6 +127,41 @@ export async function getMovementsTotals({
   return { ...totals, net: totals.income - totals.expense };
 }
 
+/**
+ * De los `external_id` candidatos, cuáles ya existen en la cuenta.
+ *
+ * Server-only, como el resto de este archivo. El wizard de importación (Client Component) la
+ * invoca a través de `lib/services/movements.import-actions.ts`, no directamente: un `"use server"`
+ * por función no alcanza cuando el módulo que la contiene también importa `next/headers`
+ * (vía `createClient`) y ese módulo se referencia desde un Client Component — Next lo rechaza en
+ * build. La Server Action necesita vivir en un archivo propio con `"use server"` a nivel de módulo.
+ */
+export async function getExistingExternalIds(accountId: string, externalIds: string[]) {
+  if (externalIds.length === 0) {
+    return [];
+  }
+
+  const supabase = await createClient();
+  const user = await supabase.auth.getUser();
+
+  if (!user.data.user) {
+    throw new Error("User not authenticated");
+  }
+
+  const { data, error } = await supabase
+    .from("movements")
+    .select("external_id, accounts!inner(user_id)")
+    .eq("account_id", accountId)
+    .eq("accounts.user_id", user.data.user.id)
+    .in("external_id", externalIds);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return (data as unknown as { external_id: string }[]).map((row) => row.external_id);
+}
+
 export async function getMovementById(id: string) {
   const supabase = await createClient();
   const user = await supabase.auth.getUser();

@@ -33,6 +33,12 @@ export const movementSchema = z.object({
 
 export type createMovement = z.infer<typeof movementSchema>;
 
+export const importedMovementSchema = movementSchema.extend({
+  external_id: z.string().min(1),
+});
+
+export type createImportedMovement = z.infer<typeof importedMovementSchema>;
+
 // TODO: transferencias entre cuentas (implica cambio de modelo de datos)
 
 export type Movement = {

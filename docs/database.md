@@ -7,9 +7,10 @@ para que esa lógica no sea invisible desde el código.
 Para verlos en Supabase: *Database → Triggers*, *Database → Functions* y
 *Authentication → Policies*.
 
-Dos temas, y conviene leer los dos antes de tocar `movements`: los [triggers](#triggers-existentes)
-(que gobiernan el saldo) y la [RLS](#row-level-security-rls) (que es la única barrera de seguridad
-de la base).
+Tres temas, y conviene leerlos antes de tocar `movements`: los [triggers](#triggers-existentes)
+(que gobiernan el saldo), los [índices y restricciones](#índices-y-restricciones) (que sostienen
+la deduplicación de importaciones) y la [RLS](#row-level-security-rls) (que es la única barrera de
+seguridad de la base).
 
 ## Triggers existentes
 
@@ -188,6 +189,32 @@ where sub.account_id = a.id
 
 > Ojo: esta reparación dispara `trigger_accounts_updated_at`, así que va a modificar el
 > `updated_at` de las cuentas corregidas.
+
+## Índices y restricciones
+
+### `movements.external_id`
+
+Soporta la deduplicación de la importación de extractos bancarios (ver
+[`docs/imports.md`](imports.md)). Guarda el identificador que trae el extracto (nro. de
+comprobante), prefijado `doc:`, o una huella calculada, prefijada `fp:`, cuando el banco no trae
+identificador propio. Los movimientos cargados a mano quedan con `external_id` en `NULL`.
+
+```sql
+alter table movements add column external_id text;
+
+create unique index movements_account_external_id_key
+  on movements (account_id, external_id);
+```
+
+El índice único **no es parcial**: en Postgres los `NULL` son distintos entre sí dentro de un
+índice único, así que todos los movimientos con `external_id` en `NULL` (los cargados a mano)
+conviven sin chocar contra el índice. Esto es lo que permite además usar `onConflict` desde
+PostgREST — un índice parcial no lo dejaría expresar.
+
+**Efecto secundario:** un `upsert` con `onConflict: "account_id,external_id"` que choca contra
+una fila existente no dispara `trigger_update_account_balance` para la fila descartada (con
+`ignoreDuplicates: true`, Postgres ni siquiera intenta el `UPDATE`). Reimportar un extracto no
+puede descuadrar el saldo.
 
 ## Row Level Security (RLS)
 

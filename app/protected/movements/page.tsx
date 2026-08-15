@@ -5,7 +5,7 @@ import TableSkeleton from "@/components/table-skeleton";
 import { MovementFilter } from "@/lib/schemas/movements";
 import { getAccounts } from "@/lib/services/accounts";
 import { getMovementTypes } from "@/lib/services/movement-types";
-import { Plus } from "lucide-react";
+import { Plus, Upload } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
 
@@ -40,10 +40,17 @@ export default async function MovementsPage({
         <h1 className="text-2xl font-semibold">Movimientos</h1>
         <Link
           href="/protected/movements/create"
-          className="flex gap-2 pr-2 pl-1 py-1 rounded-md bg-[#fafafa] hover:bg-[#e4e5e5] text-black"
+          className="flex gap-1 pr-5 pl-4 py-2 rounded-md bg-[#fafafa] hover:bg-[#b3b3b3] text-black transition-all duration-400 ease-in-out border"
         >
           <Plus />
           <span>Nuevo</span>
+        </Link>
+        <Link
+          href="/protected/movements/import"
+          className="flex gap-1 pr-5 pl-4 py-2 rounded-md bg-gray-600 hover:bg-gray-700 transition-all duration-400 ease-in-out border"
+        >
+          <Upload />
+          <span>Importar</span>
         </Link>
       </div>
       <div className="space-y-6">
