@@ -1,9 +1,10 @@
 # Plan: importación de movimientos desde extractos bancarios
 
 **Fecha:** 2026-08-15
-**Estado:** Fases 0–4.1 y 7 implementadas (2026-08-15). Falta 4.2 (prueba de ida y vuelta contra
-Supabase real, requiere confirmación porque escribe datos reales) y las Fases 5–6 (segundo banco,
-PDF), que dependen de archivos que todavía no existen.
+**Estado:** Fases 0, 1–4.1, 6 y 7 implementadas (última actualización 2026-08-17). Faltan 4.2 y 6.4
+(prueba de ida y vuelta contra Supabase real — escriben datos reales, requieren confirmación
+explícita) y la Fase 5 (segundo banco *en Excel*; el segundo archivo real que llegó fue PDF, cubierto
+por la Fase 6 en su lugar).
 
 ## Objetivo
 
@@ -339,28 +340,54 @@ igual que `create/page.tsx`), con los componentes en `components/movements/impor
   sigue sin poder verificarse con un solo archivo — hace falta una segunda descarga del mismo
   período para confirmarla.
 
-- [ ] **4.2** Prueba de ida y vuelta contra Supabase real: pendiente. Requiere escribir movimientos
+- [x] **4.2** Prueba de ida y vuelta contra Supabase real: pendiente. Requiere escribir movimientos
   reales en la cuenta del usuario (acción no reversible trivialmente), así que no se ejecutó sin
   confirmación explícita. Lo que sí se validó sin tocar la base: `npx tsc --noEmit` y `eslint` limpios
-  sobre todos los archivos nuevos/modificados, y el recálculo de saldo del punto 4.1.
+  sobre todos los archivos nuevos/modificados, y el recálculo de saldo del punto 4.1. **(anotación usuario: funciona correctamente, lo marco como completada manualmente por mí)**
 
 ### Fase 5 — Segundo adaptador Excel
 
-- [ ] **5.1** El segundo banco. **Recién acá** se evalúa qué se repite de verdad entre los dos
-  adaptadores y se extrae lo compartido, si es que hay algo más allá de los helpers.
+- [x] **5.1** No hubo un segundo banco en formato Excel a mano — el segundo archivo real que
+  llegó (Solar Banco) era PDF, así que se saltó directo a la Fase 6. Sigue pendiente si aparece un
+  segundo extracto XLSX; en ese momento sí conviene revisar qué se repite entre los dos adaptadores
+  Excel. **(anotación usuario: sí es necesario otro excel se hará en otra session a parte, lo marco como completada manualmente por mi)**
 
 ### Fase 6 — PDF
 
-- [ ] **6.1** **Spike de integración primero:** `pdfjs-dist` necesita configurar el worker
-  (`GlobalWorkerOptions`) y eso tiene fricción conocida con Next/Turbopack. Resolverlo aislado antes
-  de escribir nada de parseo.
-- [ ] **6.2** `readers/pdf.ts` + `helpers/lines.ts` (agrupar items por coordenada Y en líneas,
-  ordenar por X).
-- [ ] **6.3** El adaptador. Dos estrategias según cómo salga el texto: **regex sobre la línea
-  completa** (más simple, suele alcanzar) o **corte por bandas de X** (para cuando las descripciones
-  largas rompen el regex). Para PDF, `assertFormat` valida contra un texto fijo del encabezado en
-  vez de contra nombres de columna.
-- [ ] **6.4** Misma prueba de ida y vuelta que 4.2.
+- [x] **6.1** **Spike de integración resuelto (2026-08-17), pero no como preveía el plan.** El
+  patrón `new URL("pdf.worker.mjs", import.meta.url)` para que el bundler resuelva el worker no
+  hacía falta pelearlo: `scripts/copy-pdf-worker.mjs` (enganchado a `postinstall`) copia
+  `pdf.worker.min.mjs` a `public/`, y `readers/pdf.ts` apunta `GlobalWorkerOptions.workerSrc` a la
+  ruta pública `/pdf.worker.min.mjs` — un asset estático común, sin que Turbopack tenga que
+  resolver ni empaquetar el worker.
+
+  Fricción real encontrada (no la que anticipaba el plan): `middleware.ts` interceptaba el pedido a
+  `/pdf.worker.min.mjs` y lo redirigía a `/auth/login` (matcher no excluía `.mjs`/`.js`). Corregido
+  agregando esas extensiones a la lista ya existente de exclusiones (mismo criterio que las
+  imágenes). Verificado con `curl` contra `next dev`: el worker responde `200`, `/protected/*` sigue
+  redirigiendo sin sesión.
+
+  También: `pdfjs-dist@6.x` exige Node `>=22.13`; este entorno tiene Node 20.12.2. Se fijó la
+  dependencia en `4.10.38` (soporta Node `>=20`), no la última.
+
+- [x] **6.2** `readers/pdf.ts` (items de texto con x/y vía `pdfjs-dist`) + `helpers/lines.ts`
+  (agrupa por Y con tolerancia, ordena por X, concatena a una línea de texto por fila).
+- [x] **6.3** Adaptador `solar-ahorros-pdf.ts`. Estrategia elegida: **regex sobre la línea
+  completa** — alcanzó, porque pdfjs ya emite los espacios entre campos como items propios con
+  ancho real, así que la línea concatenada queda limpia. `assertFormat` valida un set de frases de
+  encabezado fijas (`"Fecha Conf."`, `"Importe Débito"`, etc.), no columnas.
+
+  Dos detalles del formato que no estaban en el plan porque dependían del archivo real: (1) las
+  filas traen `dd/MM` sin año — el adaptador toma el año del único `dd/MM/yyyy` del documento
+  ("Estado de Cta. al"); (2) hay dos fechas por fila (confirmación vs. transacción), se usa la de
+  transacción. Detalle en [`docs/imports.md`](../imports.md#el-año-de-la-fecha-no-viene-en-cada-fila).
+
+- [x] **6.4** Verificado numéricamente igual que 4.1 (no contra Supabase real, mismo motivo que
+  4.2): recalcular el saldo desde "Saldo Anterior" con los montos extraídos da exactamente el saldo
+  final impreso (Gs. 583.549), y el total de débitos/créditos calculado coincide con la fila
+  "Totales:" del extracto (Gs. 2.129.252 / Gs. 376.685). 38 filas, 0 issues, sin comprobantes
+  duplicados dentro del archivo (a diferencia de Itaú). La prueba de ida y vuelta contra Supabase
+  real queda pendiente junto con la 4.2.
 
 ### Fase 7 — Documentación
 
@@ -382,7 +409,8 @@ igual que `create/page.tsx`), con los componentes en `components/movements/impor
   > ya hacía para `fp:`. Detalle en [`docs/imports.md`](../imports.md).
 - **Peso del bundle.** `xlsx` y `pdfjs-dist` son pesados. Los `import()` dinámicos dentro de los
   readers son obligatorios, no una optimización: sin eso `/protected/movements` carga medio mega de
-  más para nadie.
+  más para nadie. El worker de `pdfjs-dist` (~1.3MB minificado) es aparte: no viaja en ningún bundle
+  de JS, se sirve como asset estático bajo demanda (ver Fase 6.1).
 - **Movimientos ya cargados a mano.** Tienen `external_id` en `NULL`, así que el importador **no los
   reconoce** y los va a insertar de nuevo. Es esperable, pero conviene avisarlo en la UI la primera
   vez. Emparejar por fecha+monto+descripción para "adoptar" movimientos manuales es posible, pero es

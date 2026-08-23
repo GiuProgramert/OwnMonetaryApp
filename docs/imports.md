@@ -10,11 +10,16 @@ dónde se suelen romper los adaptadores.
 archivo -> [ reader ] -> [ adaptador del banco ] -> ExtractedRow[] -> dedup -> preview -> insert
 ```
 
-- `lib/imports/types.ts` — el contrato (`ExtractedRow`, `BankAdapter`, `ExtractResult`, `FormatCheck`).
-- `lib/imports/readers/` — `File` → matriz de celdas. Uno por formato de archivo (hoy solo `xlsx.ts`),
-  no por banco.
-- `lib/imports/helpers/` — `date.ts`, `amount.ts`, `headers.ts`, `fingerprint.ts`. El trabajo
-  aburrido que comparten todos los adaptadores.
+- `lib/imports/types.ts` — el contrato (`ExtractedRow`, `BankAdapter`, `AdapterProbe`, `ExtractResult`,
+  `FormatCheck`). `AdapterProbe` es una unión discriminada por `format` (`"xlsx" | "pdf"`) — cada
+  adaptador declara su `format` y el wizard arma el probe correspondiente antes de llamar
+  `assertFormat`.
+- `lib/imports/readers/` — `File` → datos crudos. Uno por formato de archivo, no por banco:
+  `xlsx.ts` (matriz de celdas, vía `xlsx`) y `pdf.ts` (items de texto con x/y por página, vía
+  `pdfjs-dist`).
+- `lib/imports/helpers/` — `date.ts`, `amount.ts`, `headers.ts` (mapeo de columnas por nombre para
+  XLSX), `lines.ts` (agrupar items de PDF en líneas por Y, ordenar por X), `fingerprint.ts`. El
+  trabajo aburrido que comparten todos los adaptadores.
 - `lib/imports/adapters/<banco>-<producto>.ts` — un archivo por formato soportado, registrado en
   `adapters/index.ts`. **Esta es la única pieza que cambia por banco.**
 - `components/movements/import/` — el asistente de 3 pasos (fuente → preview → confirmar).
@@ -63,6 +68,57 @@ Los cuatro lugares donde un extracto nuevo (o un cambio de formato del mismo ban
    un banco no deja una fila vacía entre los datos y el resumen, ese adaptador necesita su propia
    condición de corte (p. ej. una palabra clave conocida en la primera columna).
 
+## Adaptadores PDF
+
+Mismo contrato, pero dos diferencias de fondo respecto a XLSX:
+
+- **`assertFormat` valida texto fijo, no columnas.** Un PDF no tiene celdas con nombre; el
+  adaptador de Solar Banco (`solar-ahorros-pdf.ts`) busca un conjunto de frases de encabezado
+  (`"Fecha Conf."`, `"Importe Débito"`, etc.) en el texto extraído. Si falta alguna, mismo
+  `FormatCheck` de siempre — la UI no distingue entre "columna" y "frase de encabezado".
+- **Estrategia de fila: regex sobre la línea completa, no bandas de X.** `readers/pdf.ts` da
+  items con x/y; `helpers/lines.ts` los agrupa en líneas por Y y los concatena en orden de X. Como
+  pdfjs ya emite los espacios entre campos como items propios (con ancho real), el resultado es una
+  línea de texto limpia y de un solo espacio entre columnas — alcanza con un regex ancorado
+  (`TRANSACTION_LINE_REGEX` en el adaptador). El plan preveía bandas de X como alternativa para
+  cuando las descripciones largas rompen el regex (columna `.+?` no-greedy); no hizo falta acá
+  porque las descripciones de Solar Banco no traen dígitos sueltos, pero es la salida si un futuro
+  banco sí los trae.
+
+### El worker de pdfjs-dist se sirve como asset estático, no se resuelve por bundler
+
+La fricción conocida entre `pdfjs-dist` y Turbopack (anticipada en el plan, Fase 6.1) es que
+Turbopack no soporta bien el patrón `new URL("pdf.worker.mjs", import.meta.url)` que sí funciona
+con webpack. La solución: `scripts/copy-pdf-worker.mjs`, enganchado a `postinstall`, copia
+`pdf.worker.min.mjs` desde `node_modules/pdfjs-dist` a `public/`. `readers/pdf.ts` apunta
+`GlobalWorkerOptions.workerSrc` a `"/pdf.worker.min.mjs"` — una ruta pública común y corriente, sin
+que el bundler tenga que resolver ni empaquetar nada. El archivo no se commitea (está en
+`.gitignore`), se regenera en cada `npm install`.
+
+**Efecto colateral que hay que conocer:** `middleware.ts` matcheaba todas las rutas salvo imágenes
+conocidas, así que `/pdf.worker.min.mjs` caía dentro de `updateSession` y un pedido sin sesión
+devolvía un 307 a `/auth/login` en vez del archivo. Se agregaron `mjs`/`js` a la lista de
+extensiones excluidas del matcher (ninguna URL de página autenticada termina en esas extensiones,
+mismo razonamiento que ya se usaba para las imágenes).
+
+**Versión fijada en `4.10.38`, no la última (`6.x`).** `pdfjs-dist@6` exige Node `>=22.13`; este
+entorno corre Node 20. La versión 4.x soporta Node `>=20` sin warnings de `engines`. Si se
+actualiza Node, vale la pena revisar si conviene subir `pdfjs-dist` también.
+
+### El año de la fecha no viene en cada fila
+
+Las filas de Solar Banco traen `dd/MM` sin año. El adaptador toma el año del primer patrón
+`dd/MM/yyyy` que aparece en el documento (la fecha de "Estado de Cta. al" del encabezado) y lo
+combina con el `dd/MM` de "Fecha Tran." de cada fila. **Límite conocido:** si el período de un
+extracto cruza un fin de año (estado emitido en enero con movimientos de diciembre), esas filas
+quedarían mal fechadas con el año del estado — no hay evidencia de ese caso en el archivo de
+referencia (frecuencia semanal) y no se resolvió a ciegas. Ver el comentario en
+`findStatementYear` (`solar-ahorros-pdf.ts`).
+
+También hay dos columnas de fecha por fila (`Fecha Conf.`, confirmación del banco, y
+`Fecha Tran.`, cuándo pasó la transacción). El adaptador usa `Fecha Tran.` como `date` del
+movimiento — es la que describe cuándo ocurrió el gasto, no cuándo el banco lo procesó.
+
 ## El identificador del banco no siempre es único dentro del archivo
 
 Descubierto al validar el adaptador de Itaú (Fase 4.1) contra un extracto real: el número de
@@ -81,3 +137,8 @@ período solapado y en la carga anterior solo una de las dos líneas con el mism
 presente, la numeración de ocurrencia se puede correr. Caso de borde aceptable — la alternativa
 (no numerar nunca) pierde una transacción real con certeza, en vez de arriesgar un duplicado en un
 caso raro.
+
+El mecanismo es genérico (vive en `computeExternalIds`, no en el adaptador de Itaú), así que
+cualquier banco nuevo queda cubierto automáticamente. Chequeado también contra el extracto de
+referencia de Solar Banco: sus números de comprobante no se repiten dentro del archivo, así que ahí
+el caso nunca se activa — pero si algún día lo hace, no hace falta tocar nada.

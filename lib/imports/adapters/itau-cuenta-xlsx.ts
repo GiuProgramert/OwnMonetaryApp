@@ -94,7 +94,12 @@ export const itauCuentaXlsxAdapter: BankAdapter = {
   id: "itau-cuenta-xlsx",
   label: "Itaú — Extracto de cuenta (Excel)",
   accept: [".xlsx", ".xls"],
+  format: "xlsx",
   assertFormat(probe) {
+    if (probe.format !== "xlsx") {
+      return { ok: false, missing: REQUIRED_HEADERS, found: [] };
+    }
+
     const match = locateHeaderRow(probe.matrix, REQUIRED_HEADERS);
     return checkRequiredColumns(match, REQUIRED_HEADERS);
   },

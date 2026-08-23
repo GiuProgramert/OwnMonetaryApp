@@ -17,6 +17,9 @@
 /.next/
 /out/
 
+# generado por scripts/copy-pdf-worker.mjs (postinstall), no se commitea
+/public/pdf.worker.min.mjs
+
 # production
 /build
 

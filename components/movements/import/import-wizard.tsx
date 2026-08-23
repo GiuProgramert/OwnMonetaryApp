@@ -18,8 +18,10 @@ import ImportPreviewTable from "@/components/movements/import/import-preview-tab
 import ImportSummary from "@/components/movements/import/import-summary";
 import { PreviewRow, PreviewRowStatus } from "@/components/movements/import/types";
 import { ADAPTERS } from "@/lib/imports/adapters";
-import { FormatCheck } from "@/lib/imports/types";
+import { AdapterProbe, FormatCheck } from "@/lib/imports/types";
 import { readXlsxMatrix } from "@/lib/imports/readers/xlsx";
+import { readPdfItems } from "@/lib/imports/readers/pdf";
+import { groupIntoLines } from "@/lib/imports/helpers/lines";
 import { computeExternalIds } from "@/lib/imports/helpers/fingerprint";
 import { Account } from "@/lib/schemas/accounts";
 import { MovementType } from "@/lib/schemas/movement-types";
@@ -83,8 +85,14 @@ export default function ImportWizard({ accounts, movementTypes }: Props) {
     setIsProcessing(true);
 
     try {
-      const matrix = await readXlsxMatrix(file);
-      const check = selectedAdapter.assertFormat({ matrix });
+      const probe: AdapterProbe =
+        selectedAdapter.format === "xlsx"
+          ? { format: "xlsx", matrix: await readXlsxMatrix(file) }
+          : {
+              format: "pdf",
+              lines: groupIntoLines(await readPdfItems(file)).map((line) => line.raw),
+            };
+      const check = selectedAdapter.assertFormat(probe);
 
       if (!check.ok) {
         setFormatCheck(check);

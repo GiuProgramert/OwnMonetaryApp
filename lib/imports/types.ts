@@ -23,14 +23,15 @@ export type FormatCheck =
   | { ok: true }
   | { ok: false; missing: string[]; found: string[] };
 
-export type AdapterProbe = {
-  matrix: unknown[][];
-};
+export type AdapterProbe =
+  | { format: "xlsx"; matrix: unknown[][] }
+  | { format: "pdf"; lines: string[] };
 
 export type BankAdapter = {
   id: string;
   label: string;
   accept: string[];
+  format: "xlsx" | "pdf";
   assertFormat: (probe: AdapterProbe) => FormatCheck;
   extract: (file: File) => Promise<ExtractResult>;
 };
