@@ -164,6 +164,15 @@ export default function ImportWizard({ accounts, movementTypes }: Props) {
     );
   };
 
+  // El externalId no se recalcula acá a propósito: se calculó una sola vez sobre la descripción
+  // tal como vino del extracto, y tiene que seguir así para que reimportar el mismo archivo
+  // reconozca estas filas como "ya importada" sin importar qué haya tipeado el usuario después.
+  const handleChangeDescription = (key: string, description: string) => {
+    setPreviewRows((rows) =>
+      rows.map((row) => (row.key === key ? { ...row, description } : row))
+    );
+  };
+
   const handleBulkAssignType = (movementTypeId: string) => {
     setPreviewRows((rows) =>
       rows.map((row) => (row.included ? { ...row, movementTypeId } : row))
@@ -176,6 +185,24 @@ export default function ImportWizard({ accounts, movementTypes }: Props) {
     if (missingType.length > 0) {
       toast.error(
         `Asigná un tipo de movimiento a las ${missingType.length} filas seleccionadas antes de continuar.`
+      );
+      return;
+    }
+
+    const missingDescription = includedRows.filter((row) => !row.description.trim());
+
+    if (missingDescription.length > 0) {
+      toast.error(
+        `Completá la descripción de las ${missingDescription.length} filas seleccionadas antes de continuar.`
+      );
+      return;
+    }
+
+    const descriptionTooLong = includedRows.filter((row) => row.description.length > 255);
+
+    if (descriptionTooLong.length > 0) {
+      toast.error(
+        `La descripción de ${descriptionTooLong.length} filas seleccionadas supera los 255 caracteres.`
       );
       return;
     }
@@ -235,6 +262,7 @@ export default function ImportWizard({ accounts, movementTypes }: Props) {
           movementTypes={movementTypes}
           onToggleIncluded={handleToggleIncluded}
           onChangeType={handleChangeType}
+          onChangeDescription={handleChangeDescription}
           onBulkAssignType={handleBulkAssignType}
         />
         <div className="flex gap-2">

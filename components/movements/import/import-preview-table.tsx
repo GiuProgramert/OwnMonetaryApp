@@ -12,6 +12,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import MovementTypeSelect from "@/components/movement-type-select";
 import { MovementType } from "@/lib/schemas/movement-types";
@@ -36,6 +37,7 @@ interface Props {
   movementTypes: Pick<MovementType, "id" | "name" | "color">[];
   onToggleIncluded: (key: string, included: boolean) => void;
   onChangeType: (key: string, movementTypeId: string) => void;
+  onChangeDescription: (key: string, description: string) => void;
   onBulkAssignType: (movementTypeId: string) => void;
 }
 
@@ -44,6 +46,7 @@ export default function ImportPreviewTable({
   movementTypes,
   onToggleIncluded,
   onChangeType,
+  onChangeDescription,
   onBulkAssignType,
 }: Props) {
   const [bulkMovementTypeId, setBulkMovementTypeId] = useState<string | undefined>(undefined);
@@ -104,7 +107,14 @@ export default function ImportPreviewTable({
                   <TableCell>
                     {row.date && new Date(row.date).toLocaleDateString("es-PY")}
                   </TableCell>
-                  <TableCell className="max-w-56 truncate">{row.description}</TableCell>
+                  <TableCell>
+                    <Input
+                      value={row.description}
+                      onChange={(e) => onChangeDescription(row.key, e.target.value)}
+                      maxLength={255}
+                      className="min-w-56"
+                    />
+                  </TableCell>
                   <TableCell>Gs. {row.amount?.toLocaleString("es-PY")}</TableCell>
                   <TableCell>
                     <Badge variant={row.type === "credit" ? "default" : "destructive"}>
