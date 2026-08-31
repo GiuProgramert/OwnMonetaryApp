@@ -18,13 +18,10 @@ const MOVEMENT_COLUMNS = `
   movement_types!inner(name,color)
 `;
 
-export default async function getMovements({
-  movementTypeId,
-  startDate,
-  endDate,
-  accountId,
-  page,
-}: MovementFilter) {
+export default async function getMovements(
+  { movementTypeId, startDate, endDate, accountId, page }: MovementFilter,
+  { orderBy = "date", type }: { orderBy?: "date" | "amount"; type?: Type } = {}
+) {
   const supabase = await createClient();
   const user = await supabase.auth.getUser();
 
@@ -44,6 +41,10 @@ export default async function getMovements({
     query = query.eq("movement_type_id", movementTypeId);
   }
 
+  if (type) {
+    query = query.eq("type", type);
+  }
+
   if (startDate) {
     query = query.gte("date", startDate);
   }
@@ -58,7 +59,7 @@ export default async function getMovements({
 
   const { data, error, count } = await query
     .eq("accounts.user_id", user.data.user.id)
-    .order("date", { ascending: false })
+    .order(orderBy, { ascending: false })
     .range(from, to);
 
   if (error) {
@@ -81,50 +82,23 @@ export async function getMovementsTotals({
     throw new Error("User not authenticated");
   }
 
-  let query = supabase
-    .from("movements")
-    .select("amount,type,accounts!inner(user_id)");
-
-  if (accountId) {
-    query = query.eq("account_id", accountId);
-  }
-
-  if (movementTypeId) {
-    query = query.eq("movement_type_id", movementTypeId);
-  }
-
-  if (startDate) {
-    query = query.gte("date", startDate);
-  }
-
-  if (endDate) {
-    query = query.lte("date", endDate);
-  }
-
-  const { data, error } = await query.eq(
-    "accounts.user_id",
-    user.data.user.id
-  );
+  const { data, error } = await supabase.rpc("get_movements_totals", {
+    p_account_id: accountId ?? null,
+    p_movement_type_id: movementTypeId ?? null,
+    p_start_date: startDate ?? null,
+    p_end_date: endDate ?? null,
+  });
 
   if (error) {
     throw new Error(error.message);
   }
 
-  const movements = data as unknown as { amount: number; type: Type }[];
+  const row = (data as { income: number; expense: number }[])[0] ?? {
+    income: 0,
+    expense: 0,
+  };
 
-  const totals = movements.reduce(
-    (acc, movement) => {
-      if (movement.type === "credit") {
-        acc.income += movement.amount;
-      } else {
-        acc.expense += movement.amount;
-      }
-      return acc;
-    },
-    { income: 0, expense: 0 }
-  );
-
-  return { ...totals, net: totals.income - totals.expense };
+  return { income: row.income, expense: row.expense, net: row.income - row.expense };
 }
 
 /**

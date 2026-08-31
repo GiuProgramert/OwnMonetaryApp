@@ -48,6 +48,24 @@ The schema has no versioned migrations in this repo — triggers, functions and 
 
 `app/protected/movements/import` lets a user upload a bank statement (XLSX today) and bulk-create movements without duplicating a previous import. See [`docs/imports.md`](docs/imports.md) for the adapter engine (`lib/imports/`), how to add a new bank format, and where adapters tend to break. All parsing runs client-side; there is no Route Handler for this feature.
 
+### Dashboard (`app/protected/page.tsx`)
+
+`lib/services/dashboard.ts` + `components/dashboard/` render the home dashboard: balance
+distribution across accounts, expenses by movement type, and monthly income/expense flow. State
+lives in the URL (`?accountId=&startDate=&endDate=`), defaulted to the current month by
+`lib/dashboard/date-range.ts` — same pattern as `movements`. Filters are shared with `movements` via
+`components/date-range-filter.tsx`.
+
+**All aggregation for this module goes through Postgres RPC functions, never by summing raw rows in
+JS.** PostgREST caps reads at 1000 rows (`db.max_rows`); an aggregation that pages through rows and
+sums client-side silently undercounts once a user crosses that threshold. `getMovementsTotals`
+(`lib/services/movements.ts`) also uses this pattern, so it stays correct at scale too. The three RPC
+functions (`get_expenses_by_movement_type`, `get_movements_totals`, `get_monthly_flow`) are
+documented in [`docs/database.md`](docs/database.md#funciones-rpc-del-dashboard) — they aren't
+versioned in this repo, only in Supabase. Charts are `"use client"` (Recharts needs the DOM) but only
+draw already-aggregated data passed via props; the server component that fetches with the RPC wraps
+each chart in a `<Card>` and handles the empty state.
+
 ### Auth & Supabase clients
 
 Three separate Supabase client constructors exist for three contexts — use the one matching where the code runs:

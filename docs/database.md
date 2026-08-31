@@ -190,6 +190,26 @@ where sub.account_id = a.id
 > Ojo: esta reparación dispara `trigger_accounts_updated_at`, así que va a modificar el
 > `updated_at` de las cuentas corregidas.
 
+## Funciones RPC del dashboard
+
+Tres funciones agregan sobre `movements` para el dashboard (`app/protected/page.tsx`), evitando el
+límite de 1000 filas de PostgREST (`db.max_rows`): sumar en JS sobre filas crudas subcuenta en
+silencio al pasar ese umbral. Las tres son `security invoker` (nunca `security definer`: correrían
+con los permisos del dueño de la función y devolverían movimientos de todos los usuarios) y
+`set search_path = ''`, así que la RLS del usuario que llama sigue aplicando dentro de la función.
+
+| Función | Devuelve | Uso |
+| --- | --- | --- |
+| `get_expenses_by_movement_type(p_account_id, p_start_date, p_end_date)` | `(movement_type_id, name, color, total)` por tipo, solo `debit` | `lib/services/dashboard.ts` → `getExpensesByMovementType` |
+| `get_movements_totals(p_account_id, p_movement_type_id, p_start_date, p_end_date)` | `(income, expense)` | `lib/services/movements.ts` → `getMovementsTotals` (consumida también por `components/movements/totals.tsx`) |
+| `get_monthly_flow(p_account_id, p_start_date, p_end_date)` | `(month, income, expense)`, un mes por fila **solo si tiene movimientos** | `lib/services/dashboard.ts` → `getMonthlyFlow`, que rellena los meses vacíos del rango antes de pasarlo al gráfico |
+
+Los tres parámetros de cada función son `nullable`: `null` significa "sin filtrar".
+
+⚠️ **Probarlas desde el SQL editor de Supabase no valida la seguridad.** El SQL editor corre como
+`postgres` y bypassea la RLS — una función que devolviera datos de otros usuarios se vería igual de
+correcta ahí. La verificación real es logueado como usuario normal desde la app.
+
 ## Índices y restricciones
 
 ### `movements.external_id`
