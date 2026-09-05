@@ -200,6 +200,10 @@ después o en paralelo.
   como fila con ceros: directamente no viene. El gráfico de 5.6 tiene que rellenar los huecos, o va a
   dibujar dos meses contiguos que en realidad están separados por tres.
 
+  > Nota (2026-09-03): el SQL de estas tres funciones ahora vive versionado en
+  > `supabase/schemas/public/functions/` (ver `docs/plans/supabase-environment-implementation.md`).
+  > Este plan no se reescribe — queda como registro histórico.
+
 - [ ] **2.4** Confirmar que el `sum()` de guaraníes cabe en `bigint` (sí) y en el `number` de JS al
   serializar (sí, hasta 2^53 — no hace falta tratarlo como string).
 - [ ] **2.5** Smoke test en el SQL editor: que las tres funciones existan y no tiren error de

@@ -22,7 +22,7 @@ export async function createMovement(params: createMovement) {
     throw new Error(error.message);
   }
 
-  return data as Movement;
+  return data as unknown as Movement;
 }
 
 export async function updateMovement(id: string, params: createMovement) {
@@ -44,7 +44,7 @@ export async function updateMovement(id: string, params: createMovement) {
     throw new Error(error.message);
   }
 
-  return data as Movement;
+  return data as unknown as Movement;
 }
 
 export async function bulkCreateMovements(rows: createImportedMovement[]) {

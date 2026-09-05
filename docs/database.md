@@ -1,29 +1,22 @@
 # Base de datos (Supabase)
 
-Este proyecto **no tiene migraciones versionadas en el repo**. El esquema, las funciones,
-los triggers y las políticas de RLS viven únicamente en Supabase. Este documento existe
-para que esa lógica no sea invisible desde el código.
+**El esquema (tablas, índices, triggers, funciones y RLS) vive en `supabase/schemas/**`, versionado
+en el repo.** Este documento no lo duplica: explica el *por qué* — reglas para la aplicación, efectos
+secundarios no obvios, queries de diagnóstico — que el SQL exportado no dice por sí solo. Para ver
+el esquema tal como está en Supabase hoy, leé `supabase/schemas/public/**`; para el historial de
+cambios, `supabase/migrations/`. Ver también [`docs/supabase.md`](supabase.md) para el flujo de
+trabajo (cómo cambiar el esquema, generar tipos, qué comandos no corren en esta máquina).
 
-Para verlos en Supabase: *Database → Triggers*, *Database → Functions* y
-*Authentication → Policies*.
-
-Tres temas, y conviene leerlos antes de tocar `movements`: los [triggers](#triggers-existentes)
+Tres temas, y conviene leerlos antes de tocar `movements`: los [triggers](#reglas-para-la-aplicación)
 (que gobiernan el saldo), los [índices y restricciones](#índices-y-restricciones) (que sostienen
 la deduplicación de importaciones) y la [RLS](#row-level-security-rls) (que es la única barrera de
 seguridad de la base).
 
-## Triggers existentes
-
-| Trigger | Tabla | Función | Events |
-| --- | --- | --- | --- |
-| `trigger_accounts_updated_at` | `accounts` | `update_updated_at` | `BEFORE UPDATE` |
-| `trigger_movement_types_updated_at` | `movement_types` | `update_updated_at` | `BEFORE UPDATE` |
-| `trigger_movements_updated_at` | `movements` | `update_updated_at` | `BEFORE UPDATE` |
-| `trigger_update_account_balance` | `movements` | `update_account_balance` | `AFTER UPDATE` `AFTER DELETE` `AFTER INSERT` |
-
 ## Reglas para la aplicación
 
-Estas tres reglas se desprenden directamente de los triggers y son obligatorias:
+Estas tres reglas se desprenden directamente de los triggers (`supabase/schemas/public/tables/*.sql`
+para dónde están enganchados, `supabase/schemas/public/functions/*.sql` para sus cuerpos) y son
+obligatorias:
 
 1. **Nunca escribir `updated_at` desde la app.** Lo setea `update_updated_at` en cada `UPDATE`.
 2. **Nunca escribir `current_balance` desde la app.** Es un valor derivado: se modifica
@@ -32,70 +25,9 @@ Estas tres reglas se desprenden directamente de los triggers y son obligatorias:
 3. **`movements.type` debe ser siempre exactamente `'credit'` o `'debit'`.** Cualquier otro
    valor corrompe el saldo en silencio (ver [Efectos secundarios](#efectos-secundarios), punto 1).
 
-## Funciones
-
-### `update_updated_at`
-
-```sql
-BEGIN
-  NEW.updated_at = NOW();
-  RETURN NEW;
-END;
-```
-
-### `update_account_balance`
-
-Cubre `INSERT`, `UPDATE` y `DELETE`. En el caso `UPDATE` revierte el movimiento anterior
-sobre `OLD.account_id` y aplica el nuevo sobre `NEW.account_id`, así que **mover un
-movimiento de una cuenta a otra cuadra correctamente**.
-
-```sql
-BEGIN
-  -- If INSERT or UPDATE, calculate new balance
-  IF (TG_OP = 'INSERT') THEN
-    UPDATE accounts
-    SET current_balance = current_balance +
-      CASE
-        WHEN NEW.type = 'credit' THEN NEW.amount
-        WHEN NEW.type = 'debit' THEN -NEW.amount
-      END
-    WHERE id = NEW.account_id;
-
-  ELSIF (TG_OP = 'UPDATE') THEN
-    -- Revert previous movement
-    UPDATE accounts
-    SET current_balance = current_balance -
-      CASE
-        WHEN OLD.type = 'credit' THEN OLD.amount
-        WHEN OLD.type = 'debit' THEN -OLD.amount
-      END
-    WHERE id = OLD.account_id;
-
-    -- Apply new movement
-    UPDATE accounts
-    SET current_balance = current_balance +
-      CASE
-        WHEN NEW.type = 'credit' THEN NEW.amount
-        WHEN NEW.type = 'debit' THEN -NEW.amount
-      END
-    WHERE id = NEW.account_id;
-
-  ELSIF (TG_OP = 'DELETE') THEN
-    -- Revert deleted movement
-    UPDATE accounts
-    SET current_balance = current_balance -
-      CASE
-        WHEN OLD.type = 'credit' THEN OLD.amount
-        WHEN OLD.type = 'debit' THEN -OLD.amount
-      END
-    WHERE id = OLD.account_id;
-
-    RETURN OLD;
-  END IF;
-
-  RETURN NEW;
-END;
-```
+`update_account_balance` cubre `INSERT`, `UPDATE` y `DELETE`. En el caso `UPDATE` revierte el
+movimiento anterior sobre `OLD.account_id` y aplica el nuevo sobre `NEW.account_id`, así que
+**mover un movimiento de una cuenta a otra cuadra correctamente**.
 
 ## Efectos secundarios
 
@@ -197,6 +129,7 @@ límite de 1000 filas de PostgREST (`db.max_rows`): sumar en JS sobre filas crud
 silencio al pasar ese umbral. Las tres son `security invoker` (nunca `security definer`: correrían
 con los permisos del dueño de la función y devolverían movimientos de todos los usuarios) y
 `set search_path = ''`, así que la RLS del usuario que llama sigue aplicando dentro de la función.
+Los cuerpos están en `supabase/schemas/public/functions/`.
 
 | Función | Devuelve | Uso |
 | --- | --- | --- |
@@ -217,14 +150,9 @@ correcta ahí. La verificación real es logueado como usuario normal desde la ap
 Soporta la deduplicación de la importación de extractos bancarios (ver
 [`docs/imports.md`](imports.md)). Guarda el identificador que trae el extracto (nro. de
 comprobante), prefijado `doc:`, o una huella calculada, prefijada `fp:`, cuando el banco no trae
-identificador propio. Los movimientos cargados a mano quedan con `external_id` en `NULL`.
-
-```sql
-alter table movements add column external_id text;
-
-create unique index movements_account_external_id_key
-  on movements (account_id, external_id);
-```
+identificador propio. Los movimientos cargados a mano quedan con `external_id` en `NULL`. El índice
+único `movements_account_external_id_key` está definido en
+`supabase/schemas/public/tables/movements.sql`.
 
 El índice único **no es parcial**: en Postgres los `NULL` son distintos entre sí dentro de un
 índice único, así que todos los movimientos con `external_id` en `NULL` (los cargados a mano)
@@ -263,51 +191,8 @@ parecen:
 
 Que `movements` no tenga `user_id` es lo que obliga a que todas sus políticas lleven la subconsulta.
 Una política de `movements` que solo referencie columnas de `movements` **no está scopeando por
-dueño**.
-
-### Políticas
-
-```sql
--- accounts: dueño directo
-create policy "accounts_select_own" on accounts
-  for select using (user_id = (select auth.uid()));
-
-create policy "accounts_insert_own" on accounts
-  for insert to authenticated
-  with check (user_id = (select auth.uid()));
-
-create policy "accounts_update_own" on accounts
-  for update using (user_id = (select auth.uid()));
-
-create policy "accounts_delete_own" on accounts
-  for delete using (user_id = (select auth.uid()));
-
--- movements: dueño indirecto, a través de la cuenta.
--- El mismo EXISTS va en las cuatro; en INSERT como with_check.
-create policy "movements_insert_own" on movements
-  for insert to authenticated
-  with check (
-    exists (
-      select 1 from accounts a
-      where a.id = movements.account_id
-        and a.user_id = (select auth.uid())
-    )
-  );
--- (idem select / update / delete, con la misma expresión en `using`)
-
--- movement_types: tabla compartida, cerrada a anónimos
-create policy "movement_types_read" on movement_types
-  for select to authenticated using (true);
-
-create policy "movement_types_write" on movement_types
-  for all to authenticated
-  using (true) with check (true);
-```
-
-> Este bloque documenta **la forma** de las políticas, no sus nombres exactos: varias se crearon
-> antes con nombres descriptivos en inglés (`"Users can view own accounts"`, etc.). Para ver las
-> definiciones vigentes, correr la query 2 de [cómo verificar](#cómo-verificar) — esa es la
-> autoridad, no este bloque.
+dueño**. Las políticas vigentes, con su DDL completo, están en
+`supabase/schemas/public/tables/*.sql`.
 
 ### Reglas para la aplicación
 

@@ -83,17 +83,17 @@ export async function getMovementsTotals({
   }
 
   const { data, error } = await supabase.rpc("get_movements_totals", {
-    p_account_id: accountId ?? null,
-    p_movement_type_id: movementTypeId ?? null,
-    p_start_date: startDate ?? null,
-    p_end_date: endDate ?? null,
+    p_account_id: accountId ?? undefined,
+    p_movement_type_id: movementTypeId ?? undefined,
+    p_start_date: startDate ?? undefined,
+    p_end_date: endDate ?? undefined,
   });
 
   if (error) {
     throw new Error(error.message);
   }
 
-  const row = (data as { income: number; expense: number }[])[0] ?? {
+  const row = data?.[0] ?? {
     income: 0,
     expense: 0,
   };

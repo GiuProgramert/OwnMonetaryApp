@@ -37,21 +37,16 @@ export async function getExpensesByMovementType(
   }
 
   const { data, error } = await supabase.rpc("get_expenses_by_movement_type", {
-    p_account_id: filter.accountId ?? null,
-    p_start_date: filter.startDate ?? null,
-    p_end_date: filter.endDate ?? null,
+    p_account_id: filter.accountId ?? undefined,
+    p_start_date: filter.startDate ?? undefined,
+    p_end_date: filter.endDate ?? undefined,
   });
 
   if (error) {
     throw new Error(error.message);
   }
 
-  const rows = (data ?? []) as {
-    movement_type_id: string;
-    name: string;
-    color: string;
-    total: number;
-  }[];
+  const rows = data ?? [];
 
   const total = rows.reduce((sum, row) => sum + row.total, 0);
   const withPercentage: ExpenseByType[] = rows.map((row) => ({
@@ -88,16 +83,16 @@ export async function getMonthlyFlow(filter: DashboardFilter): Promise<MonthlyFl
   }
 
   const { data, error } = await supabase.rpc("get_monthly_flow", {
-    p_account_id: filter.accountId ?? null,
-    p_start_date: filter.startDate ?? null,
-    p_end_date: filter.endDate ?? null,
+    p_account_id: filter.accountId ?? undefined,
+    p_start_date: filter.startDate ?? undefined,
+    p_end_date: filter.endDate ?? undefined,
   });
 
   if (error) {
     throw new Error(error.message);
   }
 
-  const rows = (data ?? []) as { month: string; income: number; expense: number }[];
+  const rows = data ?? [];
   const byMonth = new Map(rows.map((row) => [row.month.slice(0, 7), row]));
 
   if (!filter.startDate || !filter.endDate) {

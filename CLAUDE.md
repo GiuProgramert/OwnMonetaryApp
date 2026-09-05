@@ -36,13 +36,14 @@ After any client-side mutation, forms call `revalidateMyDataAndRedirect(path)` (
 
 Not-found lookups check `error.details === notFoundDetailMessage` (from `lib/constants.ts`) rather than the Postgrest error code, since Supabase's `.single()` error shape is matched by message text here.
 
-### Database triggers and RLS
+### Database schema, triggers and RLS
 
-The schema has no versioned migrations in this repo — triggers, functions and RLS policies live only in Supabase. See [`docs/database.md`](docs/database.md) for:
+The schema (tables, indexes, triggers, functions, RLS policies) is versioned declaratively in `supabase/schemas/**`, with a hand-written baseline migration in `supabase/migrations/`. That tree is the source of truth for *what* exists. [`docs/database.md`](docs/database.md) is the source of truth for *why* — the pieces the SQL doesn't say by itself — and [`docs/supabase.md`](docs/supabase.md) documents the schema-change workflow (`migration new` → edit → `db:push` → `db:pull` → `db:types`) and which `supabase` CLI commands don't work on this machine (no Docker in this WSL2 distro).
 
-- **Triggers/functions** — what they do, the app-level rules they impose (never write `updated_at` or `current_balance` from the app, `movements.type` must be exactly `credit`/`debit`), and the balance-drift diagnostic/repair queries. Read it before touching `movements` or `accounts` balance logic.
-- **RLS** — the ownership model (`movements` has no `user_id`; ownership resolves through `accounts`), the policies, and the verification queries. RLS is the only security boundary: `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` ships in the browser bundle, so the `.eq("accounts.user_id", ...)` filters in `lib/services/*` are query convenience, not protection. Any new table needs RLS enabled plus a policy, and policies use `(select auth.uid())`, never bare `auth.uid()`.
-- **`movements.external_id`** — the unique `(account_id, external_id)` index that backs the bank-statement import feature (dedup). See [`docs/database.md`](docs/database.md#índices-y-restricciones).
+- **Triggers/functions** — see `supabase/schemas/public/{tables,functions}/*.sql` for what they do. [`docs/database.md`](docs/database.md) has the app-level rules they impose (never write `updated_at` or `current_balance` from the app, `movements.type` must be exactly `credit`/`debit`), and the balance-drift diagnostic/repair queries. Read it before touching `movements` or `accounts` balance logic.
+- **RLS** — the ownership model (`movements` has no `user_id`; ownership resolves through `accounts`) and the policies' DDL are in `supabase/schemas/public/tables/*.sql`; [`docs/database.md`](docs/database.md#row-level-security-rls) has the verification queries and why RLS is the only security boundary: `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` ships in the browser bundle, so the `.eq("accounts.user_id", ...)` filters in `lib/services/*` are query convenience, not protection. Any new table needs RLS enabled plus a policy, and policies use `(select auth.uid())`, never bare `auth.uid()`.
+- **`movements.external_id`** — the unique `(account_id, external_id)` index that backs the bank-statement import feature (dedup), defined in `supabase/schemas/public/tables/movements.sql`. See [`docs/database.md`](docs/database.md#índices-y-restricciones) for why it isn't partial and the `onConflict` side effect.
+- **Generated types vs. hand-written schemas** — `lib/supabase/database.types.ts` (generated via `npm run db:types`) types the three Supabase client constructors and `.rpc()` calls; it describes raw tables. `lib/schemas/*.ts` stays hand-written with Zod: it describes the joined shapes the services return (`Movement` embeds `accounts`/`movement_types`), which no generated type expresses. Don't migrate `lib/schemas/*.ts` to the generated types — see [`docs/supabase.md`](docs/supabase.md) for why.
 
 ### Bank statement imports
 
@@ -61,8 +62,8 @@ JS.** PostgREST caps reads at 1000 rows (`db.max_rows`); an aggregation that pag
 sums client-side silently undercounts once a user crosses that threshold. `getMovementsTotals`
 (`lib/services/movements.ts`) also uses this pattern, so it stays correct at scale too. The three RPC
 functions (`get_expenses_by_movement_type`, `get_movements_totals`, `get_monthly_flow`) are
-documented in [`docs/database.md`](docs/database.md#funciones-rpc-del-dashboard) — they aren't
-versioned in this repo, only in Supabase. Charts are `"use client"` (Recharts needs the DOM) but only
+versioned in `supabase/schemas/public/functions/` and documented in
+[`docs/database.md`](docs/database.md#funciones-rpc-del-dashboard). Charts are `"use client"` (Recharts needs the DOM) but only
 draw already-aggregated data passed via props; the server component that fetches with the RPC wraps
 each chart in a `<Card>` and handles the empty state.
 
