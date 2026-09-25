@@ -10,7 +10,7 @@ export default async function ImportMovementsPage() {
   ]);
 
   return (
-    <FormContainer title="Importar movimientos" href="/protected/movements">
+    <FormContainer title="Importar movimientos" href="/protected/movements" wide>
       <ImportWizard accounts={accounts} movementTypes={movementTypes} />
     </FormContainer>
   );
