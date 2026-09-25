@@ -2,6 +2,7 @@ import MovementsTable from "@/components/movements/table";
 import MovementsFilters from "@/components/movements/filters";
 import MovementsTotals from "@/components/movements/totals";
 import TableSkeleton from "@/components/table-skeleton";
+import { Button } from "@/components/ui/button";
 import { MovementFilter } from "@/lib/schemas/movements";
 import { getAccounts } from "@/lib/services/accounts";
 import { getMovementTypes } from "@/lib/services/movement-types";
@@ -38,20 +39,18 @@ export default async function MovementsPage({
     <div className="w-full">
       <div className="mb-4 flex gap-4 items-center">
         <h1 className="text-2xl font-semibold">Movimientos</h1>
-        <Link
-          href="/protected/movements/create"
-          className="flex gap-1 pr-5 pl-4 py-2 rounded-md bg-[#fafafa] hover:bg-[#b3b3b3] text-black transition-all duration-400 ease-in-out border"
-        >
-          <Plus />
-          <span>Nuevo</span>
-        </Link>
-        <Link
-          href="/protected/movements/import"
-          className="flex gap-1 pr-5 pl-4 py-2 rounded-md bg-gray-600 hover:bg-gray-700 transition-all duration-400 ease-in-out border"
-        >
-          <Upload />
-          <span>Importar</span>
-        </Link>
+        <Button asChild>
+          <Link href="/protected/movements/create">
+            <Plus />
+            <span>Nuevo</span>
+          </Link>
+        </Button>
+        <Button asChild variant="outline">
+          <Link href="/protected/movements/import">
+            <Upload />
+            <span>Importar</span>
+          </Link>
+        </Button>
       </div>
       <div className="space-y-6">
         <MovementsFilters accounts={accounts} movementTypes={movementTypes} />

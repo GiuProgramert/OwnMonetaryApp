@@ -32,7 +32,6 @@ export default function AmountInput({ id, value, onChange }: Props) {
       inputMode="numeric"
       value={display}
       onChange={handleChange}
-      className="bg-gray-600 border rounded-md p-2"
     />
   );
 }

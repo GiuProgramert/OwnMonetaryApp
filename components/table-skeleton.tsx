@@ -15,19 +15,19 @@ export default function TableSkeleton() {
       <TableHeader>
         <TableRow>
           <TableHead>
-            <Skeleton className="h-4 w-24 bg-gray-600" />
+            <Skeleton className="h-4 w-24" />
           </TableHead>
           <TableHead>
-            <Skeleton className="h-4 w-32 bg-gray-600" />
+            <Skeleton className="h-4 w-32" />
           </TableHead>
           <TableHead>
-            <Skeleton className="h-4 w-20 bg-gray-600" />
+            <Skeleton className="h-4 w-20" />
           </TableHead>
           <TableHead>
-            <Skeleton className="h-4 w-20 bg-gray-600" />
+            <Skeleton className="h-4 w-20" />
           </TableHead>
           <TableHead>
-            <Skeleton className="h-4 w-20 bg-gray-600" />
+            <Skeleton className="h-4 w-20" />
           </TableHead>
         </TableRow>
       </TableHeader>
@@ -35,24 +35,24 @@ export default function TableSkeleton() {
         {Array.from({ length: 5 }).map((_, index) => (
           <TableRow key={index}>
             <TableCell>
-              <Skeleton className="h-4 w-24 bg-gray-600" />
+              <Skeleton className="h-4 w-24" />
             </TableCell>
             <TableCell>
-              <Skeleton className="h-4 w-32 bg-gray-600" />
+              <Skeleton className="h-4 w-32" />
             </TableCell>
             <TableCell>
-              <Skeleton className="h-4 w-20 bg-gray-600" />
+              <Skeleton className="h-4 w-20" />
             </TableCell>
             <TableCell>
-              <Skeleton className="h-4 w-20 bg-gray-600" />
+              <Skeleton className="h-4 w-20" />
             </TableCell>
             <TableCell>
               <div className="flex gap-2">
                 <Button className="h-10 w-10 p-0 bg-transparent">
-                  <Skeleton className="h-10 w-10 bg-gray-600" />
+                  <Skeleton className="h-10 w-10" />
                 </Button>
                 <Button className="h-10 w-10 p-0 bg-transparent">
-                  <Skeleton className="h-10 w-10 bg-gray-600" />
+                  <Skeleton className="h-10 w-10" />
                 </Button>
               </div>
             </TableCell>

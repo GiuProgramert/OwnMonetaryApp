@@ -38,10 +38,9 @@ export default function EditAccountForm({ initialValues }: Props) {
             id="name"
             {...register("name")}
             defaultValue={initialValues.name}
-            className="bg-gray-600 border rounded-md p-2"
           />
           {errors.name && (
-            <p className="text-sm text-red-600">{errors.name.message}</p>
+            <p className="text-sm text-destructive">{errors.name.message}</p>
           )}
         </div>
         <div className="grid gap-2">
@@ -52,7 +51,6 @@ export default function EditAccountForm({ initialValues }: Props) {
             defaultValue={`Gs. ${initialValues.current_balance.toLocaleString(
               "es-PY"
             )}`}
-            className="bg-gray-600 border rounded-md p-2"
           />
         </div>
         <div className="grid gap-2">
@@ -63,18 +61,17 @@ export default function EditAccountForm({ initialValues }: Props) {
               type="color"
               defaultValue={initialValues.color}
               {...register("color")}
-              className="bg-gray-600 border rounded-md w-20 p-0"
+              className="w-20 p-0"
             />
             <Input
               id="color"
               disabled
               value={initialValues.color}
               onChange={() => {}}
-              className="bg-gray-600 border rounded-md p-2"
             />
           </div>
           {errors.color && (
-            <p className="text-sm text-red-600">{errors.color.message}</p>
+            <p className="text-sm text-destructive">{errors.color.message}</p>
           )}
         </div>
       </div>

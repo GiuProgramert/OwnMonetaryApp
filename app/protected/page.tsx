@@ -112,10 +112,10 @@ function CardSkeleton() {
   return (
     <Card>
       <CardHeader className="pb-2">
-        <Skeleton className="h-4 w-32 bg-gray-600" />
+        <Skeleton className="h-4 w-32" />
       </CardHeader>
       <CardContent>
-        <Skeleton className="h-6 w-24 bg-gray-600" />
+        <Skeleton className="h-6 w-24" />
       </CardContent>
     </Card>
   );
@@ -125,7 +125,7 @@ function ChartCardSkeleton() {
   return (
     <Card>
       <CardHeader>
-        <Skeleton className="h-4 w-40 bg-gray-600" />
+        <Skeleton className="h-4 w-40" />
       </CardHeader>
       <CardContent>
         <ChartSkeleton />

@@ -34,10 +34,9 @@ export default function CreateAccountForm() {
           <Input
             id="name"
             {...register("name")}
-            className="bg-gray-600 border rounded-md p-2"
           />
           {errors.name && (
-            <p className="text-sm text-red-600">{errors.name.message}</p>
+            <p className="text-sm text-destructive">{errors.name.message}</p>
           )}
         </div>
         <div className="grid gap-2">
@@ -47,17 +46,16 @@ export default function CreateAccountForm() {
               id="color"
               type="color"
               {...register("color")}
-              className="bg-gray-600 border rounded-md w-20 p-0"
+              className="w-20 p-0"
             />
             <Input
               id="color"
               disabled
               value={getValues("color") || "#000000"}
-              className="bg-gray-600 border rounded-md p-2"
             />
           </div>
           {errors.color && (
-            <p className="text-sm text-red-600">{errors.color.message}</p>
+            <p className="text-sm text-destructive">{errors.color.message}</p>
           )}
         </div>
       </div>

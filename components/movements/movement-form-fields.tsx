@@ -37,10 +37,9 @@ export default function MovementFormFields({ accounts, movementTypes }: Props) {
           id="date"
           type="date"
           {...register("date")}
-          className="bg-gray-600 border rounded-md p-2"
         />
         {errors.date && (
-          <p className="text-sm text-red-600">{errors.date.message}</p>
+          <p className="text-sm text-destructive">{errors.date.message}</p>
         )}
       </div>
 
@@ -49,10 +48,9 @@ export default function MovementFormFields({ accounts, movementTypes }: Props) {
         <Input
           id="description"
           {...register("description")}
-          className="bg-gray-600 border rounded-md p-2"
         />
         {errors.description && (
-          <p className="text-sm text-red-600">{errors.description.message}</p>
+          <p className="text-sm text-destructive">{errors.description.message}</p>
         )}
       </div>
 
@@ -66,7 +64,7 @@ export default function MovementFormFields({ accounts, movementTypes }: Props) {
           )}
         />
         {errors.amount && (
-          <p className="text-sm text-red-600">{errors.amount.message}</p>
+          <p className="text-sm text-destructive">{errors.amount.message}</p>
         )}
       </div>
 
@@ -91,7 +89,7 @@ export default function MovementFormFields({ accounts, movementTypes }: Props) {
           )}
         />
         {errors.type && (
-          <p className="text-sm text-red-600">{errors.type.message}</p>
+          <p className="text-sm text-destructive">{errors.type.message}</p>
         )}
       </div>
 
@@ -110,7 +108,7 @@ export default function MovementFormFields({ accounts, movementTypes }: Props) {
           )}
         />
         {errors.account_id && (
-          <p className="text-sm text-red-600">{errors.account_id.message}</p>
+          <p className="text-sm text-destructive">{errors.account_id.message}</p>
         )}
       </div>
 
@@ -129,7 +127,7 @@ export default function MovementFormFields({ accounts, movementTypes }: Props) {
           )}
         />
         {errors.movement_type_id && (
-          <p className="text-sm text-red-600">
+          <p className="text-sm text-destructive">
             {errors.movement_type_id.message}
           </p>
         )}
