@@ -15,14 +15,14 @@ interface Props {
 export default function FormContainer({ children, title, href, wide }: Props) {
   return (
     <section className={cn("w-full mt-4", !wide && "max-w-2xl")}>
-      <div className="mb-4 flex gap-4 items-center">
+      <div className="mb-4 flex flex-wrap items-center gap-3 sm:gap-4">
         <Link href={href}>
           <ChevronLeft />
         </Link>
-        <h1 className="text-2xl font-semibold">{title}</h1>
+        <h1 className="min-w-0 text-xl sm:text-2xl font-semibold">{title}</h1>
       </div>
       <div className="space-y-6">
-        <div className="p-4 border rounded-md bg-card">{children}</div>
+        <div className="p-3 sm:p-4 border rounded-md bg-card">{children}</div>
       </div>
     </section>
   );

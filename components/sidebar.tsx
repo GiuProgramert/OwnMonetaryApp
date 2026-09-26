@@ -4,35 +4,8 @@ import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { Home, User, Activity, DollarSign, Shapes, Target, ChevronLeft } from "lucide-react";
-
-const navItems: { label: string; href: string; icon: React.ReactNode }[] = [
-  {
-    label: "Dashboard",
-    href: "/protected",
-    icon: <Home className="w-5 h-5" />,
-  },
-  {
-    label: "Cuentas",
-    href: "/protected/accounts",
-    icon: <User className="w-5 h-5" />,
-  },
-  {
-    label: "Movimientos",
-    href: "/protected/movements",
-    icon: <Activity className="w-5 h-5" />,
-  },
-  {
-    label: "Tipos de movimientos",
-    href: "/protected/movement-types",
-    icon: <Shapes className="w-5 h-5" />,
-  },
-  {
-    label: "Presupuestos",
-    href: "/protected/budgets",
-    icon: <Target className="w-5 h-5" />,
-  },
-];
+import { isNavItemActive, navItems } from "@/lib/nav-items";
+import { DollarSign, ChevronLeft } from "lucide-react";
 
 export default function Sidebar() {
   const pathname = usePathname();
@@ -41,13 +14,13 @@ export default function Sidebar() {
   return (
     <aside
       className={cn(
-        "transition-all duration-500 shrink-0 bg-card border-r border-border rounded-md",
+        "hidden md:block sticky top-5 h-[calc(100dvh-2.5rem)] transition-all duration-500 shrink-0 bg-card border-r border-border rounded-md",
         open ? "w-64" : "w-20"
       )}
     >
       <div className="h-full flex flex-col">
         <div className="flex items-center justify-between p-3 border-b border-b-foreground/10">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 min-w-0">
             <div className="ml-1">
               <DollarSign
                 className={cn("text-foreground", open ? "w-6 h-6" : "w-5 h-5")}
@@ -59,7 +32,7 @@ export default function Sidebar() {
           <button
             aria-label={open ? "Cerrar sidebar" : "Abrir sidebar"}
             onClick={() => setOpen((s) => !s)}
-            className="p-1 rounded hover:bg-accent/10"
+            className="p-1 rounded hover:bg-accent/10 shrink-0"
           >
             <ChevronLeft className={cn("w-5 h-5 transition-all duration-300", open && "rotate-180")} />
           </button>
@@ -68,12 +41,14 @@ export default function Sidebar() {
         <nav className="flex-1 overflow-auto py-2">
           <ul className="space-y-1 p-2">
             {navItems.map((item) => {
-              const active =
-                pathname === item.href || pathname?.startsWith(item.href + "/");
+              const active = isNavItemActive(pathname, item.href);
+              const Icon = item.icon;
+
               return (
                 <li key={item.href}>
                   <Link
                     href={item.href}
+                    aria-current={active ? "page" : undefined}
                     className={cn(
                       "flex items-center gap-3 p-2 rounded-md hover:bg-accent/5",
                       active ? "bg-accent/10 font-medium" : ""
@@ -85,7 +60,7 @@ export default function Sidebar() {
                         open ? "" : "mx-auto"
                       )}
                     >
-                      {item.icon}
+                      <Icon className="w-5 h-5" />
                     </span>
                     {open && <span className="truncate">{item.label}</span>}
                   </Link>

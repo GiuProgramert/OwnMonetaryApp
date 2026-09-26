@@ -45,8 +45,8 @@ export default function DateRangeFilter({ startDate, endDate, onChange }: Props)
           );
         })}
       </div>
-      <div className="flex gap-2">
-        <div className="grid gap-1">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <div className="grid min-w-0 gap-1">
           <Label htmlFor="startDate" className="text-xs text-muted-foreground">
             Desde
           </Label>
@@ -59,7 +59,7 @@ export default function DateRangeFilter({ startDate, endDate, onChange }: Props)
             }
           />
         </div>
-        <div className="grid gap-1">
+        <div className="grid min-w-0 gap-1">
           <Label htmlFor="endDate" className="text-xs text-muted-foreground">
             Hasta
           </Label>

@@ -17,11 +17,11 @@ export default function ImportFormatError({ adapter, check, onBack }: Props) {
         <p>
           Falta{check.missing.length > 1 ? "n" : ""} la{check.missing.length > 1 ? "s" : ""}{" "}
           columna{check.missing.length > 1 ? "s" : ""}:{" "}
-          <span className="font-mono">{check.missing.join(", ")}</span>.
+          <span className="font-mono break-words">{check.missing.join(", ")}</span>.
         </p>
         <p>
           Columnas encontradas:{" "}
-          <span className="font-mono">
+          <span className="font-mono break-words">
             {check.found.length > 0 ? check.found.join(", ") : "ninguna"}
           </span>
           .

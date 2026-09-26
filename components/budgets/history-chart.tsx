@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/chart";
 import { formatCompactAmount, formatCurrency } from "@/lib/dashboard/format";
 import { BudgetHistoryRow } from "@/lib/schemas/budgets";
+import { useIsMobile } from "@/lib/hooks/use-media-query";
 
 const chartConfig: ChartConfig = {
   amount_limit: { label: "Tope", color: "#9ca3af" },
@@ -22,6 +23,7 @@ interface Props {
 }
 
 export default function BudgetHistoryChart({ rows }: Props) {
+  const isMobile = useIsMobile();
   // El servicio devuelve del más reciente al más viejo; el eje X va de izquierda a derecha.
   const data = [...rows].reverse();
 
@@ -29,8 +31,8 @@ export default function BudgetHistoryChart({ rows }: Props) {
     <ChartContainer config={chartConfig} className="w-full h-72">
       <BarChart data={data} margin={{ left: 8, right: 8 }}>
         <CartesianGrid vertical={false} />
-        <XAxis dataKey="monthLabel" tickLine={false} />
-        <YAxis tickFormatter={formatCompactAmount} width={64} />
+        <XAxis dataKey="monthLabel" tickLine={false} minTickGap={16} />
+        <YAxis tickFormatter={formatCompactAmount} width={isMobile ? 48 : 64} />
         <ChartTooltip
           content={
             <ChartTooltipContent formatter={(value) => formatCurrency(Number(value))} />

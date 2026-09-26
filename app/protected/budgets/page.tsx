@@ -18,8 +18,8 @@ export default async function BudgetsPage({
 
   return (
     <div className="w-full">
-      <div className="mb-4 flex gap-4 items-center">
-        <h1 className="text-2xl font-semibold">Presupuestos</h1>
+      <div className="mb-4 flex flex-wrap items-center gap-3 sm:gap-4">
+        <h1 className="text-xl sm:text-2xl font-semibold">Presupuestos</h1>
         <Button asChild>
           <Link href="/protected/budgets/create">
             <Plus />
@@ -32,8 +32,8 @@ export default async function BudgetsPage({
         <Suspense fallback={null}>
           <BudgetsTotals month={month} />
         </Suspense>
-        <div className="p-4 border rounded-md bg-card">
-          <Suspense fallback={<TableSkeleton />}>
+        <div className="p-3 sm:p-4 border rounded-md bg-card">
+          <Suspense fallback={<TableSkeleton columns={5} />}>
             <BudgetsTable month={month} />
           </Suspense>
         </div>

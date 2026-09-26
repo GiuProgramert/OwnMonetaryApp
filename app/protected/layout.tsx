@@ -1,3 +1,4 @@
+import MobileNav from "@/components/mobile-nav";
 import Sidebar from "@/components/sidebar";
 import { Toaster } from "react-hot-toast";
 
@@ -7,9 +8,10 @@ export default function ProtectedLayout({
   children: React.ReactNode;
 }) {
   return (
-    <main className="min-h-screen flex flex-col items-center">
+    <main className="min-h-dvh overflow-x-hidden">
       <Toaster position="top-right" />
-      <div className="w-full min-h-screen flex gap-6 p-5">
+
+      <div className="flex w-full gap-4 p-3 pb-20 sm:p-4 md:gap-6 md:p-5 md:pb-5">
         <Sidebar />
 
         <div className="flex-1 min-w-0 flex justify-center">
@@ -18,6 +20,8 @@ export default function ProtectedLayout({
           </div>
         </div>
       </div>
+
+      <MobileNav />
     </main>
   );
 }

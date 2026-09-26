@@ -49,7 +49,7 @@ export default function MovementsFilters({ accounts, movementTypes }: Props) {
 
   return (
     <div className="flex flex-wrap gap-4 items-end">
-      <div className="grid gap-2 w-56">
+      <div className="grid gap-2 w-full sm:w-56">
         <Label>Cuenta</Label>
         <AccountSelect
           accounts={accounts}
@@ -60,7 +60,7 @@ export default function MovementsFilters({ accounts, movementTypes }: Props) {
           allLabel="Todas las cuentas"
         />
       </div>
-      <div className="grid gap-2 w-56">
+      <div className="grid gap-2 w-full sm:w-56">
         <Label>Tipo de movimiento</Label>
         <MovementTypeSelect
           movementTypes={movementTypes}

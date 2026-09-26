@@ -15,22 +15,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import MovementTypeSelect from "@/components/movement-type-select";
+import ImportPreviewCards from "@/components/movements/import/import-preview-cards";
+import RowStatusBadge from "@/components/movements/import/row-status-badge";
 import { MovementType } from "@/lib/schemas/movement-types";
-import { PreviewRow, PreviewRowStatus } from "@/components/movements/import/types";
-
-const STATUS_LABEL: Record<PreviewRowStatus, string> = {
-  new: "Nueva",
-  "already-imported": "Ya importada",
-  "duplicate-in-file": "Duplicada en el archivo",
-  error: "Error de lectura",
-};
-
-const STATUS_VARIANT: Record<PreviewRowStatus, "default" | "secondary" | "outline" | "destructive"> = {
-  new: "default",
-  "already-imported": "secondary",
-  "duplicate-in-file": "outline",
-  error: "destructive",
-};
+import { PreviewRow } from "@/components/movements/import/types";
 
 interface Props {
   rows: PreviewRow[];
@@ -55,7 +43,7 @@ export default function ImportPreviewTable({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-end gap-4 rounded-md border p-4">
-        <div className="grid gap-2 min-w-64">
+        <div className="grid gap-2 w-full sm:w-auto sm:min-w-64">
           <Label>Asignar tipo a las filas seleccionadas ({selectedCount})</Label>
           <MovementTypeSelect
             movementTypes={movementTypes}
@@ -73,67 +61,81 @@ export default function ImportPreviewTable({
         </Button>
       </div>
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Incluir</TableHead>
-            <TableHead>Estado</TableHead>
-            <TableHead>Fecha</TableHead>
-            <TableHead>Descripción</TableHead>
-            <TableHead>Monto</TableHead>
-            <TableHead>Naturaleza</TableHead>
-            <TableHead>Tipo de movimiento</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {rows.map((row) => (
-            <TableRow key={row.key}>
-              <TableCell>
-                <Checkbox
-                  checked={row.included}
-                  disabled={row.status === "error"}
-                  onCheckedChange={(checked) => onToggleIncluded(row.key, checked === true)}
-                />
-              </TableCell>
-              <TableCell>
-                <Badge variant={STATUS_VARIANT[row.status]}>{STATUS_LABEL[row.status]}</Badge>
-              </TableCell>
-              {row.status === "error" ? (
-                <TableCell colSpan={5} className="text-sm text-muted-foreground">
-                  {row.reason}
-                </TableCell>
-              ) : (
-                <>
-                  <TableCell>
-                    {row.date && new Date(row.date).toLocaleDateString("es-PY")}
-                  </TableCell>
-                  <TableCell>
-                    <Input
-                      value={row.description}
-                      onChange={(e) => onChangeDescription(row.key, e.target.value)}
-                      maxLength={255}
-                      className="min-w-56"
-                    />
-                  </TableCell>
-                  <TableCell>Gs. {row.amount?.toLocaleString("es-PY")}</TableCell>
-                  <TableCell>
-                    <Badge variant={row.type === "credit" ? "default" : "destructive"}>
-                      {row.type === "credit" ? "Crédito" : "Débito"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <MovementTypeSelect
-                      movementTypes={movementTypes}
-                      value={row.movementTypeId || undefined}
-                      onChange={(value) => onChangeType(row.key, value)}
-                    />
-                  </TableCell>
-                </>
-              )}
+      <div className="hidden md:block">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Incluir</TableHead>
+              <TableHead>Estado</TableHead>
+              <TableHead>Fecha</TableHead>
+              <TableHead>Descripción</TableHead>
+              <TableHead>Monto</TableHead>
+              <TableHead>Naturaleza</TableHead>
+              <TableHead>Tipo de movimiento</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {rows.map((row) => (
+              <TableRow key={row.key}>
+                <TableCell>
+                  <Checkbox
+                    checked={row.included}
+                    disabled={row.status === "error"}
+                    onCheckedChange={(checked) =>
+                      onToggleIncluded(row.key, checked === true)
+                    }
+                  />
+                </TableCell>
+                <TableCell>
+                  <RowStatusBadge status={row.status} />
+                </TableCell>
+                {row.status === "error" ? (
+                  <TableCell colSpan={5} className="text-sm text-muted-foreground">
+                    {row.reason}
+                  </TableCell>
+                ) : (
+                  <>
+                    <TableCell>
+                      {row.date && new Date(row.date).toLocaleDateString("es-PY")}
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        value={row.description}
+                        onChange={(e) =>
+                          onChangeDescription(row.key, e.target.value)
+                        }
+                        maxLength={255}
+                        className="w-full md:min-w-56"
+                      />
+                    </TableCell>
+                    <TableCell>Gs. {row.amount?.toLocaleString("es-PY")}</TableCell>
+                    <TableCell>
+                      <Badge variant={row.type === "credit" ? "default" : "destructive"}>
+                        {row.type === "credit" ? "Crédito" : "Débito"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <MovementTypeSelect
+                        movementTypes={movementTypes}
+                        value={row.movementTypeId || undefined}
+                        onChange={(value) => onChangeType(row.key, value)}
+                      />
+                    </TableCell>
+                  </>
+                )}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+
+      <ImportPreviewCards
+        rows={rows}
+        movementTypes={movementTypes}
+        onToggleIncluded={onToggleIncluded}
+        onChangeType={onChangeType}
+        onChangeDescription={onChangeDescription}
+      />
     </div>
   );
 }

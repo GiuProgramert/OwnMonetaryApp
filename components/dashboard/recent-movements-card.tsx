@@ -18,7 +18,7 @@ export default async function RecentMovementsCard({ filter, movementsHref }: Pro
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
+      <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <CardTitle>Últimos movimientos</CardTitle>
         <Link href={movementsHref} className="text-sm text-muted-foreground hover:underline">
           Ver todos

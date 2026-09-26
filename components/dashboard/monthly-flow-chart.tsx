@@ -24,10 +24,16 @@ const chartConfig: ChartConfig = {
 
 export default function MonthlyFlowChart({ flow }: Props) {
   return (
-    <ChartContainer config={chartConfig} className="w-full">
+    <ChartContainer config={chartConfig} className="w-full aspect-[4/3] sm:aspect-video">
       <ComposedChart data={flow} margin={{ left: 8, right: 8 }}>
         <CartesianGrid vertical={false} />
-        <XAxis dataKey="monthLabel" tickLine={false} axisLine={false} />
+        <XAxis
+          dataKey="monthLabel"
+          tickLine={false}
+          axisLine={false}
+          minTickGap={16}
+          interval="preserveStartEnd"
+        />
         <YAxis tickFormatter={formatCompactAmount} tickLine={false} axisLine={false} />
         <ChartTooltip
           content={<ChartTooltipContent formatter={(value) => formatCurrency(Number(value))} />}

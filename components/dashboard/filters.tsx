@@ -34,7 +34,7 @@ export default function DashboardFilters({ accounts, startDate, endDate }: Props
 
   return (
     <div className="flex flex-wrap gap-4 items-end">
-      <div className="grid gap-2 w-56">
+      <div className="grid gap-2 w-full sm:w-56">
         <Label>Cuenta</Label>
         <AccountSelect
           accounts={accounts}

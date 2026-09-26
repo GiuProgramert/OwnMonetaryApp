@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/chart";
 import { AccountBalanceSlice } from "@/lib/schemas/dashboard";
 import { formatCurrency, formatCompactAmount } from "@/lib/dashboard/format";
+import { useIsMobile } from "@/lib/hooks/use-media-query";
 
 interface Props {
   slices: AccountBalanceSlice[];
@@ -25,6 +26,7 @@ const FALLBACK_COLORS = [
 ];
 
 export default function BalancePieChart({ slices, total, hasNonPositive }: Props) {
+  const isMobile = useIsMobile();
   const chartConfig: ChartConfig = Object.fromEntries(
     slices.map((slice, index) => [
       slice.id,
@@ -41,7 +43,7 @@ export default function BalancePieChart({ slices, total, hasNonPositive }: Props
         <ChartContainer config={chartConfig} className="w-full">
           <BarChart data={slices} layout="vertical" margin={{ left: 16 }}>
             <XAxis type="number" tickFormatter={formatCompactAmount} />
-            <YAxis type="category" dataKey="name" width={100} />
+            <YAxis type="category" dataKey="name" width={isMobile ? 72 : 100} />
             <ChartTooltip
               content={
                 <ChartTooltipContent
@@ -102,9 +104,11 @@ export default function BalancePieChart({ slices, total, hasNonPositive }: Props
             </Pie>
           </PieChart>
         </ChartContainer>
-        <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+        <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center px-8 text-center">
           <span className="text-xs text-muted-foreground">Total</span>
-          <span className="text-lg font-semibold">{formatCurrency(total)}</span>
+          <span className="max-w-full truncate text-base font-semibold sm:text-lg">
+            {formatCurrency(total)}
+          </span>
         </div>
       </div>
       <ul className="space-y-1">
@@ -116,8 +120,8 @@ export default function BalancePieChart({ slices, total, hasNonPositive }: Props
                 backgroundColor: slice.color || FALLBACK_COLORS[index % FALLBACK_COLORS.length],
               }}
             />
-            <span className="flex-1 truncate">{slice.name}</span>
-            <span className="text-muted-foreground">
+            <span className="min-w-0 flex-1 truncate">{slice.name}</span>
+            <span className="shrink-0 whitespace-nowrap text-xs text-muted-foreground">
               {formatCurrency(slice.balance)} ({slice.percentage.toFixed(1)}%)
             </span>
           </li>

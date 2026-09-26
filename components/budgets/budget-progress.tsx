@@ -30,13 +30,13 @@ export default function BudgetProgress({ status }: Props) {
       : status.color;
 
   return (
-    <div className="grid gap-1 min-w-48">
+    <div className="grid gap-1 min-w-0 sm:min-w-48">
       <Progress
         value={barValue}
         style={{ "--bar-color": barColor } as React.CSSProperties}
         className="[&>div]:bg-[var(--bar-color)]"
       />
-      <div className="flex justify-between gap-2 text-xs">
+      <div className="flex flex-wrap justify-between gap-x-2 gap-y-0.5 text-xs">
         <span className="text-muted-foreground">
           {formatCurrency(status.spent)} / {formatCurrency(status.amount_limit)}
         </span>
