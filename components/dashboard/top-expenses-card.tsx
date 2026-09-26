@@ -1,3 +1,4 @@
+import { formatMovementDate } from "@/lib/movements/datetime";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import getMovements from "@/lib/services/movements";
 import { MovementFilter } from "@/lib/schemas/movements";
@@ -32,7 +33,7 @@ export default async function TopExpensesCard({ filter }: Props) {
                 <div className="min-w-0">
                   <p className="truncate">{movement.description}</p>
                   <p className="text-xs text-muted-foreground">
-                    {new Date(movement.date).toLocaleDateString("es-PY")} ·{" "}
+                    {formatMovementDate(movement.date)} ·{" "}
                     {movement.movement_types.name}
                   </p>
                 </div>

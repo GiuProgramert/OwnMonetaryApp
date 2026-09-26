@@ -35,7 +35,7 @@ export default function MovementFormFields({ accounts, movementTypes }: Props) {
         <Label htmlFor="date">Fecha</Label>
         <Input
           id="date"
-          type="date"
+          type="datetime-local"
           {...register("date")}
         />
         {errors.date && (

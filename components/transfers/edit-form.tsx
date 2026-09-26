@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { toInputValue } from "@/lib/movements/datetime";
 import TransferFormFields from "@/components/transfers/transfer-form-fields";
 import {
   Transfer,
@@ -23,7 +24,7 @@ export default function EditTransferForm({ initialValues, accounts }: Props) {
   const methods = useForm<CreateTransferInput>({
     resolver: zodResolver(transferSchema),
     defaultValues: {
-      date: initialValues.date,
+      date: toInputValue(initialValues.date),
       description: initialValues.description,
       amount: initialValues.amount,
       from_account_id: initialValues.from_account_id,

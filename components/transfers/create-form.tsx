@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { nowForInput } from "@/lib/movements/datetime";
 import TransferFormFields from "@/components/transfers/transfer-form-fields";
 import { transferSchema, createTransfer as CreateTransferInput } from "@/lib/schemas/transfers";
 import { Account } from "@/lib/schemas/accounts";
@@ -18,7 +19,7 @@ export default function CreateTransferForm({ accounts }: Props) {
   const methods = useForm<CreateTransferInput>({
     resolver: zodResolver(transferSchema),
     defaultValues: {
-      date: new Date().toISOString().slice(0, 10),
+      date: nowForInput(),
       description: "",
       amount: 0,
       from_account_id: "",

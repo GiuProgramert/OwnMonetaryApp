@@ -205,6 +205,24 @@ el nuevo, incluso moviendo plata entre dos presupuestos (cambia `movement_type_i
 (cambia `date`), y `bulkCreateMovements` (upsert de 200 filas) lo dispararía fila por fila. Cualquier
 agujero queda como descuadre permanente. **No agregar ese trigger para "completar" la feature.**
 
+## `movements.date`: fecha y hora
+
+La columna es `timestamp without time zone` (antes `date`). Plan: `docs/plans/movements-date-timestamp-implementation.md`.
+
+- **Por qué `timestamp` y no `timestamptz`.** La app asume "día calendario local de Paraguay" y
+  ninguna comparación en SQL hace matemática de zonas. Con `timestamptz`, un movimiento de las 22:00
+  del 30/09 local se guarda como 01:00 del 01/10 UTC (la sesión de PostgREST corre en UTC) y caería
+  en el mes siguiente en el dashboard y los presupuestos. Contrapartida: las horas se muestran como
+  hora paraguaya, no la del visitante.
+- **Todo fin de rango sobre `movements.date` es `< día + 1`, nunca `<=`.** `<= p_end_date` castea a
+  las 00:00 y pierde todo lo posterior del último día. Está aplicado en las tres RPC del dashboard,
+  y en `getMovements` con `nextDay()` (`lib/dashboard/date-range.ts`). El inicio (`>=`) no cambia.
+  Los parámetros `p_start_date` / `p_end_date` siguen siendo `date`.
+- **Las filas previas al cambio de tipo están a las 00:00**, igual que las importadas de extractos
+  (no traen hora). La UI omite la hora cuando es 00:00.
+- **Las RPC de presupuestos no se tocan**: ya usan `>= month_start` / `< month_start + interval '1 month'`.
+- `create_transfer` / `update_transfer` reciben `p_date timestamp`.
+
 ## Índices y restricciones
 
 ### `movements.external_id`

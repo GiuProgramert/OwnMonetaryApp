@@ -24,7 +24,7 @@ export default function TransferFormFields({ accounts }: Props) {
     <div className="grid gap-4 sm:grid-cols-2">
       <div className="grid gap-2">
         <Label htmlFor="date">Fecha</Label>
-        <Input id="date" type="date" {...register("date")} />
+        <Input id="date" type="datetime-local" {...register("date")} />
         {errors.date && (
           <p className="text-sm text-destructive">{errors.date.message}</p>
         )}

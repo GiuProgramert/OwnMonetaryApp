@@ -13,7 +13,7 @@ CREATE OR REPLACE FUNCTION public.get_monthly_flow (
   SET search_path TO ''
   AS $function$
   select
-    date_trunc('month', m.date::timestamp)::date as month,
+    date_trunc('month', m.date)::date as month,
     coalesce(sum(m.amount) filter (where m.type = 'credit'), 0)::bigint as income,
     coalesce(sum(m.amount) filter (where m.type = 'debit'),  0)::bigint as expense
   from public.movements m
@@ -22,7 +22,7 @@ CREATE OR REPLACE FUNCTION public.get_monthly_flow (
     and m.transfer_id is null
     and (p_account_id is null or m.account_id = p_account_id)
     and (p_start_date is null or m.date >= p_start_date)
-    and (p_end_date   is null or m.date <= p_end_date)
+    and (p_end_date   is null or m.date < (p_end_date + interval '1 day'))
   group by 1
   order by 1;
 $function$;

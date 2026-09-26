@@ -1,6 +1,7 @@
 import { Movement, MovementFilter, Type } from "@/lib/schemas/movements";
 import { createClient } from "@/lib/supabase/server";
 import { notFoundDetailMessage } from "@/lib/constants";
+import { nextDay } from "@/lib/dashboard/date-range";
 
 export const MOVEMENTS_PAGE_SIZE = 25;
 
@@ -51,7 +52,8 @@ export default async function getMovements(
   }
 
   if (endDate) {
-    query = query.lte("date", endDate);
+    // Fin de rango exclusivo: `date` lleva hora, así que `<= endDate` perdería el último día.
+    query = query.lt("date", nextDay(endDate));
   }
 
   const currentPage = page ?? 1;
@@ -61,6 +63,8 @@ export default async function getMovements(
   const { data, error, count } = await query
     .eq("accounts.user_id", user.data.user.id)
     .order(orderBy, { ascending: false })
+    // Desempate: sin esto el orden dentro de un mismo `date`/`amount` es arbitrario y la paginación puede repetir filas.
+    .order("created_at", { ascending: false })
     .range(from, to);
 
   if (error) {

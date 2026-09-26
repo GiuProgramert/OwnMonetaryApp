@@ -20,7 +20,14 @@ export const typeOptions: { value: Type; label: string }[] = [
 ];
 
 export const movementSchema = z.object({
-  date: z.string().min(1, "La fecha es requerida"),
+  // `YYYY-MM-DD` (importación, sin hora) o `YYYY-MM-DDTHH:mm` (`datetime-local`).
+  date: z
+    .string()
+    .min(1, "La fecha es requerida")
+    .regex(
+      /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2})?$/,
+      "La fecha no es válida"
+    ),
   description: z
     .string()
     .min(1, "La descripción es requerida")
@@ -41,6 +48,11 @@ export type createImportedMovement = z.infer<typeof importedMovementSchema>;
 
 export type Movement = {
   id: string;
+  /**
+   * Sigue siendo `string`, pero desde que la columna es `timestamp` trae la hora
+   * (`"2026-09-26T14:30:00"`). TS no marca los lugares que asumen solo fecha: usar
+   * `formatMovementDate` / `toInputValue` de `lib/movements/datetime.ts`.
+   */
   date: string;
   description: string;
   amount: number;

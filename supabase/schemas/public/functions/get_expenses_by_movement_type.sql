@@ -22,7 +22,7 @@ CREATE OR REPLACE FUNCTION public.get_expenses_by_movement_type (
     and a.user_id = (select auth.uid())
     and (p_account_id is null or m.account_id = p_account_id)
     and (p_start_date is null or m.date >= p_start_date)
-    and (p_end_date   is null or m.date <= p_end_date)
+    and (p_end_date   is null or m.date < (p_end_date + interval '1 day'))
   group by mt.id, mt.name, mt.color
   order by total desc;
 $function$;

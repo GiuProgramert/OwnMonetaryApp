@@ -3,7 +3,7 @@ CREATE OR REPLACE FUNCTION public.update_transfer (
   p_from_account_id uuid,
   p_to_account_id   uuid,
   p_amount          numeric,
-  p_date            date,
+  p_date            timestamp without time zone,
   p_description     text
 )
   RETURNS void
@@ -43,4 +43,4 @@ begin
 end;
 $function$;
 
-GRANT EXECUTE ON FUNCTION "public"."update_transfer"(uuid, uuid, uuid, numeric, date, text) TO PUBLIC, "anon", "authenticated", "postgres", "service_role";
+GRANT EXECUTE ON FUNCTION "public"."update_transfer"(uuid, uuid, uuid, numeric, timestamp WITHOUT time zone, text) TO PUBLIC, "anon", "authenticated", "postgres", "service_role";

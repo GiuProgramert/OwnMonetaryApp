@@ -1,13 +1,13 @@
 CREATE TABLE "public"."movements" (
-  "id"               uuid                     NOT NULL DEFAULT gen_random_uuid(),
-  "account_id"       uuid                     NOT NULL,
-  "movement_type_id" uuid                     NOT NULL,
-  "date"             date                     NOT NULL DEFAULT CURRENT_DATE,
-  "description"      text                     NOT NULL,
-  "amount"           numeric(15,2)            NOT NULL,
-  "type"             character varying(10)    NOT NULL,
-  "created_at"       timestamp with time zone DEFAULT now(),
-  "updated_at"       timestamp with time zone DEFAULT now(),
+  "id"               uuid                        NOT NULL DEFAULT gen_random_uuid(),
+  "account_id"       uuid                        NOT NULL,
+  "movement_type_id" uuid                        NOT NULL,
+  "date"             timestamp without time zone NOT NULL DEFAULT LOCALTIMESTAMP,
+  "description"      text                        NOT NULL,
+  "amount"           numeric(15,2)               NOT NULL,
+  "type"             character varying(10)       NOT NULL,
+  "created_at"       timestamp with time zone    DEFAULT now(),
+  "updated_at"       timestamp with time zone    DEFAULT now(),
   "external_id"      text,
   "transfer_id"      uuid,
   CONSTRAINT "movements_account_id_fkey" FOREIGN KEY (account_id) REFERENCES public.accounts(id) ON DELETE CASCADE,
@@ -69,3 +69,5 @@ CREATE POLICY "Users can view movements from own accounts" ON "public"."movement
   USING ((EXISTS ( SELECT 1
    FROM public.accounts
   WHERE ((accounts.id = movements.account_id) AND (accounts.user_id = auth.uid())))));
+
+COMMENT ON COLUMN "public"."movements"."date" IS 'Fecha y hora local del movimiento (sin zona: la app asume hora de Paraguay). Las filas previas al cambio de tipo quedaron a las 00:00.';

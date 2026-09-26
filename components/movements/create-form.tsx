@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { nowForInput } from "@/lib/movements/datetime";
 import MovementFormFields from "@/components/movements/movement-form-fields";
 import { movementSchema } from "@/lib/schemas/movements";
 import { Account } from "@/lib/schemas/accounts";
@@ -30,7 +31,7 @@ export default function CreateMovementForm({
   const methods = useForm<z.infer<typeof movementSchema>>({
     resolver: zodResolver(movementSchema),
     defaultValues: {
-      date: new Date().toISOString().slice(0, 10),
+      date: nowForInput(),
       description: "",
       amount: 0,
       type: "debit",
@@ -65,7 +66,7 @@ export default function CreateMovementForm({
     try {
       await createMovement(data);
       methods.reset({
-        date: new Date().toISOString().slice(0, 10),
+        date: nowForInput(),
         description: "",
         amount: 0,
         type: "debit",

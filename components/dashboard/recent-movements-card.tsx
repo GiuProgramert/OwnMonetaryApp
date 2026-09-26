@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { formatMovementDate } from "@/lib/movements/datetime";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import getMovements from "@/lib/services/movements";
@@ -36,7 +37,7 @@ export default async function RecentMovementsCard({ filter, movementsHref }: Pro
                 <div className="min-w-0">
                   <p className="truncate">{movement.description}</p>
                   <p className="text-xs text-muted-foreground">
-                    {new Date(movement.date).toLocaleDateString("es-PY")} · {movement.accounts.name}
+                    {formatMovementDate(movement.date)} · {movement.accounts.name}
                   </p>
                 </div>
                 <Badge variant={movement.type === "credit" ? "default" : "destructive"}>

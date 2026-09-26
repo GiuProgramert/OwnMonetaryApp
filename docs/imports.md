@@ -142,3 +142,11 @@ El mecanismo es genérico (vive en `computeExternalIds`, no en el adaptador de I
 cualquier banco nuevo queda cubierto automáticamente. Chequeado también contra el extracto de
 referencia de Solar Banco: sus números de comprobante no se repiten dentro del archivo, así que ahí
 el caso nunca se activa — pero si algún día lo hace, no hace falta tocar nada.
+
+## La huella de deduplicación sigue en `yyyy-MM-dd`
+
+`movements.date` lleva hora, pero `ExtractedRow.date` sigue siendo `"yyyy-MM-dd"` y ningún adaptador
+cambió. `buildFingerprint` hashea ese string (`date|type|amount|desc`): si el formato cambia, los
+`fp:` nuevos no coinciden con los `external_id` ya guardados y **se duplica todo lo importado
+antes**. Los extractos no traen hora; las filas entran a las 00:00. Si un extracto trae hora algún
+día, va en un campo aparte y fuera de la huella.

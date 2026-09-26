@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { toInputValue } from "@/lib/movements/datetime";
 import MovementFormFields from "@/components/movements/movement-form-fields";
 import { Movement, movementSchema } from "@/lib/schemas/movements";
 import { Account } from "@/lib/schemas/accounts";
@@ -26,7 +27,7 @@ export default function EditMovementForm({
   const methods = useForm<z.infer<typeof movementSchema>>({
     resolver: zodResolver(movementSchema),
     defaultValues: {
-      date: initialValues.date,
+      date: toInputValue(initialValues.date),
       description: initialValues.description,
       amount: initialValues.amount,
       type: initialValues.type,

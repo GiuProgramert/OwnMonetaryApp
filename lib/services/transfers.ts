@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 type TransferRow = {
   account_id: string;
   amount: number;
+  /** Trae hora (`"2026-09-26T14:30:00"`) desde que `movements.date` es `timestamp`. */
   date: string;
   description: string;
   type: "credit" | "debit";

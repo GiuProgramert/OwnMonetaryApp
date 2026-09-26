@@ -22,7 +22,7 @@ CREATE OR REPLACE FUNCTION public.get_movements_totals (
     and (p_account_id       is null or m.account_id       = p_account_id)
     and (p_movement_type_id is null or m.movement_type_id = p_movement_type_id)
     and (p_start_date is null or m.date >= p_start_date)
-    and (p_end_date   is null or m.date <= p_end_date);
+    and (p_end_date   is null or m.date < (p_end_date + interval '1 day'));
 $function$;
 
 GRANT EXECUTE ON FUNCTION "public"."get_movements_totals"(uuid, uuid, date, date) TO PUBLIC, "anon", "authenticated", "postgres", "service_role";

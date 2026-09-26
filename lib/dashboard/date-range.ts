@@ -11,6 +11,15 @@ function toDateString(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
+/**
+ * Día siguiente a `date` (`yyyy-MM-dd`), en hora local. Sirve para armar fines de rango
+ * exclusivos (`< nextDay(endDate)`) sobre columnas con hora.
+ */
+export function nextDay(date: string): string {
+  const [year, month, day] = date.split("-").map(Number);
+  return toDateString(new Date(year, month - 1, day + 1));
+}
+
 export function getCurrentMonthRange(): DateRange {
   const now = new Date();
   const start = new Date(now.getFullYear(), now.getMonth(), 1);

@@ -116,6 +116,16 @@ transferencia. Estructura: `lib/schemas/transfers.ts`, `lib/services/transfers{,
 el dueño (UUID literal en la política), y el tipo `Transferencia` (`transferMovementTypeId`) no se
 ofrece en selects ni se edita/borra.
 
+### Fecha y hora de movimientos
+
+`movements.date` es `timestamp` (hora local de Paraguay, sin zona). Tres reglas: (1) todo fin de
+rango es **exclusivo** (`< nextDay(endDate)` en JS, `< p_end_date + interval '1 day'` en SQL), nunca
+`<=`; (2) `getMovements` ordena por `date desc, created_at desc` — el desempate no es decorativo:
+sin él el orden entre filas con la misma fecha es arbitrario y `.range()` repite o salta filas;
+(3) defaults, valores de `datetime-local` y formato se calculan en hora local con
+`lib/movements/datetime.ts`, nunca con `toISOString()`. Ver
+[`docs/database.md`](docs/database.md#movementsdate-fecha-y-hora).
+
 ### Auth & Supabase clients
 
 Three separate Supabase client constructors exist for three contexts — use the one matching where the code runs:

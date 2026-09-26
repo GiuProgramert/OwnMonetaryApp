@@ -2,6 +2,7 @@ import {
   allAccountsParam,
   ResolvedAccountFilter,
 } from "@/lib/accounts/primary";
+import { formatMovementDate } from "@/lib/movements/datetime";
 import { Movement, MovementFilter } from "@/lib/schemas/movements";
 import getMovements, { MOVEMENTS_PAGE_SIZE } from "@/lib/services/movements";
 import {
@@ -186,7 +187,7 @@ export default async function MovementsTable({
                 {movements.map((movement) => (
                   <TableRow key={movement.id}>
                     <TableCell>
-                      {new Date(movement.date).toLocaleDateString("es-PY")}
+                      {formatMovementDate(movement.date)}
                     </TableCell>
                     <TableCell className="max-w-56 truncate">
                       {movement.description}
@@ -233,9 +234,7 @@ export default async function MovementsTable({
                   fields={[
                     {
                       label: "Fecha",
-                      value: new Date(movement.date).toLocaleDateString(
-                        "es-PY"
-                      ),
+                      value: formatMovementDate(movement.date),
                     },
                     {
                       label: "Monto",
