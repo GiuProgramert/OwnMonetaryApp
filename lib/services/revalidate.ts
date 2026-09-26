@@ -7,3 +7,7 @@ export async function revalidateMyDataAndRedirect(path: string) {
   revalidatePath(path);
   redirect(path);
 }
+
+export async function revalidatePathServer(path: string) {
+  revalidatePath(path);
+}

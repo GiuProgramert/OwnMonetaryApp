@@ -9,7 +9,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { FormProvider, useForm } from "react-hook-form";
 import { z } from "zod";
 import { createMovement } from "@/lib/services/movements.client";
-import { revalidateMyDataAndRedirect } from "@/lib/services/revalidate";
+import {
+  revalidateMyDataAndRedirect,
+  revalidatePathServer,
+} from "@/lib/services/revalidate";
 import toast from "react-hot-toast";
 
 interface Props {
@@ -46,7 +49,9 @@ export default function CreateMovementForm({
       await createMovement(data);
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "No se pudo crear el movimiento"
+        error instanceof Error
+          ? error.message
+          : "No se pudo crear el movimiento",
       );
       return;
     }
@@ -54,13 +59,45 @@ export default function CreateMovementForm({
     await revalidateMyDataAndRedirect("/protected/movements");
   };
 
+  const onSubmitAndAddAnother = async (
+    data: z.infer<typeof movementSchema>,
+  ) => {
+    try {
+      await createMovement(data);
+      methods.reset({
+        date: new Date().toISOString().slice(0, 10),
+        description: "",
+        amount: 0,
+        type: "debit",
+        account_id: defaultAccountId,
+        movement_type_id: "",
+      });
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "No se pudo crear el movimiento",
+      );
+    }
+
+    await revalidatePathServer("/protected/movements");
+  };
+
   return (
     <FormProvider {...methods}>
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
         <MovementFormFields accounts={accounts} movementTypes={movementTypes} />
-        <div>
+        <div className="flex gap-3">
           <Button type="submit" disabled={isSubmitting}>
             {isSubmitting ? "Creando..." : "Crear"}
+          </Button>
+          <Button
+            type="submit"
+            variant={"outline"}
+            onClick={handleSubmit(onSubmitAndAddAnother)}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "Creando..." : "Crear y agregar otro"}
           </Button>
         </div>
       </form>
