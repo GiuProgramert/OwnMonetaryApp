@@ -9,11 +9,18 @@ import { Button } from "@/components/ui/button";
 
 interface Props {
   accounts: Pick<Account, "id" | "name" | "color">[];
+  /** Resuelto en el server (un uuid o `"all"`), igual que el rango de fechas. */
+  accountId: string;
   startDate: string;
   endDate: string;
 }
 
-export default function DashboardFilters({ accounts, startDate, endDate }: Props) {
+export default function DashboardFilters({
+  accounts,
+  accountId,
+  startDate,
+  endDate,
+}: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -38,10 +45,8 @@ export default function DashboardFilters({ accounts, startDate, endDate }: Props
         <Label>Cuenta</Label>
         <AccountSelect
           accounts={accounts}
-          value={searchParams.get("accountId") ?? "all"}
-          onChange={(value) =>
-            setParams({ accountId: value === "all" ? undefined : value })
-          }
+          value={accountId}
+          onChange={(value) => setParams({ accountId: value })}
           allLabel="Todas las cuentas"
         />
       </div>
@@ -51,7 +56,11 @@ export default function DashboardFilters({ accounts, startDate, endDate }: Props
         onChange={(range) => setParams(range)}
       />
       <div>
-        <Button type="button" variant="outline" onClick={() => router.push(pathname)}>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => setParams({ startDate: undefined, endDate: undefined })}
+        >
           Volver al mes actual
         </Button>
       </div>

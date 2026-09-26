@@ -12,7 +12,7 @@ export async function getAccounts() {
 
   const { data, error } = await supabase
     .from("accounts")
-    .select("id,name,current_balance,color,created_at,updated_at,user_id")
+    .select("id,name,current_balance,color,is_primary,created_at,updated_at,user_id")
     .eq("user_id", user.data.user.id)
     .order("name", { ascending: true });
 
@@ -33,7 +33,7 @@ export async function getAccountById(id: string) {
 
   const { data, error } = await supabase
     .from("accounts")
-    .select("id,name,current_balance,color,created_at,updated_at,user_id")
+    .select("id,name,current_balance,color,is_primary,created_at,updated_at,user_id")
     .eq("id", id)
     .eq("user_id", user.data.user.id)
     .single();

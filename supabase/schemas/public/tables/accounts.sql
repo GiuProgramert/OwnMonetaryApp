@@ -5,6 +5,7 @@ CREATE TABLE "public"."accounts" (
   "created_at"      timestamp with time zone DEFAULT now(),
   "updated_at"      timestamp with time zone DEFAULT now(),
   "color"           character varying(7)     NOT NULL DEFAULT '#6B7280'::character varying,
+  "is_primary"      boolean                  NOT NULL DEFAULT false,
   CONSTRAINT "accounts_pkey" PRIMARY KEY (id),
   CONSTRAINT "check_color_format" CHECK (((color)::text ~ '^#[0-9A-Fa-f]{6}$'::text)),
   "user_id"         uuid                     DEFAULT auth.uid(),
@@ -40,3 +41,5 @@ CREATE POLICY "Users can view own accounts" ON "public"."accounts"
   FOR SELECT
   TO PUBLIC
   USING ((auth.uid() = user_id));
+
+COMMENT ON COLUMN "public"."accounts"."is_primary" IS 'Cuenta preseleccionada en filtros y formularios. Puede haber más de una por usuario; la app usa la primera por nombre.';

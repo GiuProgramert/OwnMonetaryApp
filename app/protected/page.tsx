@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
 import { getAccounts } from "@/lib/services/accounts";
+import { resolveAccountFilter } from "@/lib/accounts/primary";
 import { resolveDateRange } from "@/lib/dashboard/date-range";
 import { DashboardFilter } from "@/lib/schemas/dashboard";
 
@@ -37,8 +38,12 @@ export default async function ProtectedPage({
 
   const rawParams = await searchParams;
   const { startDate, endDate } = resolveDateRange(rawParams);
+
+  const accounts = await getAccounts();
+  const accountFilter = resolveAccountFilter(rawParams, accounts);
+
   const filter: DashboardFilter = {
-    accountId: rawParams.accountId,
+    accountId: accountFilter.accountId,
     startDate,
     endDate,
   };
@@ -53,15 +58,13 @@ export default async function ProtectedPage({
 
   const movementsHref = (() => {
     const params = new URLSearchParams();
-    if (filter.accountId) {
-      params.set("accountId", filter.accountId);
-    }
+    // Siempre explícito: sin `accountId`, movimientos volvería a aplicar su
+    // propio default (la cuenta principal) en vez de conservar lo que se ve acá.
+    params.set("accountId", accountFilter.param);
     params.set("startDate", startDate);
     params.set("endDate", endDate);
     return `/protected/movements?${params.toString()}`;
   })();
-
-  const accounts = await getAccounts();
 
   return (
     <div className="flex-1 w-full flex flex-col gap-6">
@@ -69,6 +72,7 @@ export default async function ProtectedPage({
 
       <DashboardFilters
         accounts={accounts}
+        accountId={accountFilter.param}
         startDate={startDate}
         endDate={endDate}
       />

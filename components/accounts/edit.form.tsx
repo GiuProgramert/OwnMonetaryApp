@@ -4,11 +4,12 @@
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Account, accountSchema } from "@/lib/schemas/accounts";
 import { updateAccount } from "@/lib/services/accounts.client";
 import { revalidateMyDataAndRedirect } from "@/lib/services/revalidate";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 
 interface Props {
@@ -18,10 +19,16 @@ interface Props {
 export default function EditAccountForm({ initialValues }: Props) {
   const {
     register,
+    control,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<z.infer<typeof accountSchema>>({
     resolver: zodResolver(accountSchema),
+    defaultValues: {
+      name: initialValues.name,
+      color: initialValues.color,
+      is_primary: initialValues.is_primary,
+    },
   });
 
   const onSubmit = async (data: z.infer<typeof accountSchema>) => {
@@ -73,6 +80,26 @@ export default function EditAccountForm({ initialValues }: Props) {
           {errors.color && (
             <p className="text-sm text-destructive">{errors.color.message}</p>
           )}
+        </div>
+      </div>
+      <div className="flex items-start gap-2">
+        <Controller
+          control={control}
+          name="is_primary"
+          render={({ field }) => (
+            <Checkbox
+              id="is_primary"
+              checked={field.value}
+              onCheckedChange={(checked) => field.onChange(checked === true)}
+            />
+          )}
+        />
+        <div className="grid gap-1">
+          <Label htmlFor="is_primary">Cuenta principal</Label>
+          <p className="text-sm text-muted-foreground">
+            Queda preseleccionada al filtrar movimientos y al cargar uno nuevo.
+            Podés marcar más de una: se usa la primera por orden alfabético.
+          </p>
         </div>
       </div>
       <div>

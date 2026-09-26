@@ -1,3 +1,7 @@
+import {
+  allAccountsParam,
+  ResolvedAccountFilter,
+} from "@/lib/accounts/primary";
 import { Movement, MovementFilter } from "@/lib/schemas/movements";
 import getMovements, { MOVEMENTS_PAGE_SIZE } from "@/lib/services/movements";
 import {
@@ -17,6 +21,13 @@ import { cn } from "@/lib/utils";
 
 interface Props {
   searchParams: MovementFilter;
+  accountFilter: ResolvedAccountFilter;
+  /**
+   * `true` si el usuario eligió algún filtro en la URL. No se puede derivar de
+   * `searchParams.accountId`: con el default de cuenta principal siempre viene
+   * seteado.
+   */
+  hasExplicitFilters: boolean;
 }
 
 function MovementActions({
@@ -92,15 +103,12 @@ function ColoredLabel({
   );
 }
 
-export default async function MovementsTable({ searchParams }: Props) {
+export default async function MovementsTable({
+  searchParams,
+  accountFilter,
+  hasExplicitFilters,
+}: Props) {
   const { data: movements, count } = await getMovements(searchParams);
-
-  const hasFilters = Boolean(
-    searchParams.accountId ||
-    searchParams.movementTypeId ||
-    searchParams.startDate ||
-    searchParams.endDate,
-  );
 
   const currentPage = searchParams.page ?? 1;
   const totalPages = Math.max(1, Math.ceil(count / MOVEMENTS_PAGE_SIZE));
@@ -108,9 +116,9 @@ export default async function MovementsTable({ searchParams }: Props) {
   const pageHref = (page: number) => {
     const params = new URLSearchParams();
 
-    if (searchParams.accountId) {
-      params.set("accountId", searchParams.accountId);
-    }
+    // Siempre explícito: el "all" tiene que sobrevivir a la paginación, y el
+    // default de cuenta principal queda fijado para que no cambie entre páginas.
+    params.set("accountId", accountFilter.param);
 
     if (searchParams.movementTypeId) {
       params.set("movementTypeId", searchParams.movementTypeId);
@@ -130,15 +138,34 @@ export default async function MovementsTable({ searchParams }: Props) {
 
   return (
     <div className="space-y-2">
-      {movements.length === 0 && !hasFilters && (
-        <p className="text-sm text-muted-foreground">No hay movimientos aún.</p>
-      )}
-
-      {movements.length === 0 && hasFilters && (
+      {movements.length === 0 && hasExplicitFilters && (
         <p className="text-sm text-muted-foreground">
           No hay resultados para estos filtros.
         </p>
       )}
+
+      {movements.length === 0 &&
+        !hasExplicitFilters &&
+        accountFilter.isPrimaryDefault && (
+          <p className="text-sm text-muted-foreground">
+            No hay movimientos en tu cuenta principal.{" "}
+            <Link
+              className="underline"
+              href={`/protected/movements?accountId=${allAccountsParam}`}
+            >
+              Ver todas las cuentas
+            </Link>
+            .
+          </p>
+        )}
+
+      {movements.length === 0 &&
+        !hasExplicitFilters &&
+        !accountFilter.isPrimaryDefault && (
+          <p className="text-sm text-muted-foreground">
+            No hay movimientos aún.
+          </p>
+        )}
 
       {movements.length > 0 && (
         <>

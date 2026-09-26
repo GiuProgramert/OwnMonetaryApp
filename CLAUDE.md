@@ -54,7 +54,8 @@ The schema (tables, indexes, triggers, functions, RLS policies) is versioned dec
 `lib/services/dashboard.ts` + `components/dashboard/` render the home dashboard: balance
 distribution across accounts, expenses by movement type, and monthly income/expense flow. State
 lives in the URL (`?accountId=&startDate=&endDate=`), defaulted to the current month by
-`lib/dashboard/date-range.ts` — same pattern as `movements`. Filters are shared with `movements` via
+`lib/dashboard/date-range.ts` and to the primary account by `lib/accounts/primary.ts` — same
+pattern as `movements`. Filters are shared with `movements` via
 `components/date-range-filter.tsx`.
 
 **All aggregation for this module goes through Postgres RPC functions, never by summing raw rows in
@@ -66,6 +67,25 @@ versioned in `supabase/schemas/public/functions/` and documented in
 [`docs/database.md`](docs/database.md#funciones-rpc-del-dashboard). Charts are `"use client"` (Recharts needs the DOM) but only
 draw already-aggregated data passed via props; the server component that fetches with the RPC wraps
 each chart in a `<Card>` and handles the empty state.
+
+### Filtro de cuenta y cuenta principal
+
+`accounts.is_primary` marca la cuenta preseleccionada. `lib/accounts/primary.ts`
+(`resolveAccountFilter`, puro y síncrono, mismo molde que `lib/dashboard/date-range.ts`) resuelve
+el `?accountId` **en el server**: ausente ⇒ cuenta principal, `all` ⇒ sin filtro, uuid ⇒ esa
+cuenta. Devuelve `accountId` (uuid | `undefined`, para los servicios) y `param` (uuid | `"all"`,
+para la URL y el `<AccountSelect>`).
+
+**Dos invariantes:** (1) el sentinela `"all"` nunca llega a `lib/services/*` — `getMovements`,
+`getMovementsTotals`, `getExpensesByMovementType` y `getMonthlyFlow` solo reciben un uuid o
+`undefined`; (2) todo href armado a mano (paginación, `movementsHref`, "Limpiar filtros") setea
+`accountId` explícito, porque la ausencia del parámetro significa "cuenta principal", no "todas".
+
+Igual que `startDate`/`endDate` en el dashboard, el valor resuelto viaja como **prop** a los
+filtros cliente; no se re-lee de la URL en el cliente, si no el select y la tabla se
+desincronizan. Puede haber varias cuentas principales (ver
+[`docs/database.md`](docs/database.md#cuenta-principal-accountsis_primary)); se usa la primera por
+nombre.
 
 ### Budgets (`app/protected/budgets`)
 

@@ -8,6 +8,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import RecordCard from "@/components/record-card";
+import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { Pencil, TrashIcon } from "lucide-react";
 
@@ -59,8 +60,15 @@ export default async function AccountsTable() {
               <TableBody>
                 {accounts.map((account) => (
                   <TableRow key={account.id}>
-                    <TableCell className="max-w-56 truncate">
-                      {account.name}
+                    <TableCell className="max-w-56">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="truncate">{account.name}</span>
+                        {account.is_primary && (
+                          <Badge variant="secondary" className="shrink-0">
+                            Principal
+                          </Badge>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell>
                       Gs. {account.current_balance.toLocaleString("es-PY")}
@@ -100,6 +108,11 @@ export default async function AccountsTable() {
                         className="w-3 h-3 rounded-full shrink-0"
                       />
                       <span className="min-w-0 break-words">{account.name}</span>
+                      {account.is_primary && (
+                        <Badge variant="secondary" className="shrink-0">
+                          Principal
+                        </Badge>
+                      )}
                     </div>
                   }
                   actions={<AccountActions id={account.id} />}

@@ -15,9 +15,15 @@ import toast from "react-hot-toast";
 interface Props {
   accounts: Pick<Account, "id" | "name" | "color">[];
   movementTypes: Pick<MovementType, "id" | "name" | "color">[];
+  /** Cuenta preseleccionada (la principal), resuelta en el server. `""` si no hay. */
+  defaultAccountId: string;
 }
 
-export default function CreateMovementForm({ accounts, movementTypes }: Props) {
+export default function CreateMovementForm({
+  accounts,
+  movementTypes,
+  defaultAccountId,
+}: Props) {
   const methods = useForm<z.infer<typeof movementSchema>>({
     resolver: zodResolver(movementSchema),
     defaultValues: {
@@ -25,7 +31,7 @@ export default function CreateMovementForm({ accounts, movementTypes }: Props) {
       description: "",
       amount: 0,
       type: "debit",
-      account_id: "",
+      account_id: defaultAccountId,
       movement_type_id: "",
     },
   });

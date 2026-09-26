@@ -230,6 +230,27 @@ puede descuadrar el saldo.
 
 `uuid` nullable, con índice `idx_movements_transfer`. `NULL` en los movimientos normales.
 
+## Cuenta principal (`accounts.is_primary`)
+
+`boolean not null default false`. Marca la cuenta que la app preselecciona en el filtro de
+`/protected/movements`, en el dashboard y en el alta de un movimiento.
+
+**Se permiten varias cuentas principales por usuario, a propósito.** No hay índice único parcial,
+ni trigger que desmarque las demás, ni RPC que haga el swap atómico: el desempate lo hace la app
+en `lib/accounts/primary.ts`, tomando la primera del listado, que `getAccounts()` devuelve
+ordenado por `name` ascendente. La contrapartida es que dos pestañas pueden dejar dos cuentas
+marcadas y nadie se entera; es aceptable porque el peor efecto es "se preselecciona la otra".
+
+Tampoco hay índice sobre la columna: ninguna query filtra por `is_primary`, se lee del listado de
+cuentas que la página ya trae.
+
+A diferencia de `updated_at` y `current_balance`, **esta columna sí se escribe desde la app**
+(`accountSchema` en `lib/schemas/accounts.ts` → `lib/services/accounts.client.ts`).
+
+El sentinela `"all"` de la URL (`?accountId=all` = "todas las cuentas") es puramente de la capa
+web: `resolveAccountFilter` lo traduce a `undefined` y **nunca llega a `lib/services/*`**. Si
+llegara, Postgres lo rechazaría con `22P02` (uuid inválido).
+
 ## Row Level Security (RLS)
 
 **Verificado el 2026-08-15.**

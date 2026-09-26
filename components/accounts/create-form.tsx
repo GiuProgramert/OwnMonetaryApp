@@ -4,9 +4,10 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { accountSchema } from "@/lib/schemas/accounts";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import { createAccount } from "@/lib/services/accounts.client";
 import { revalidateMyDataAndRedirect } from "@/lib/services/revalidate";
@@ -14,11 +15,13 @@ import { revalidateMyDataAndRedirect } from "@/lib/services/revalidate";
 export default function CreateAccountForm() {
   const {
     register,
+    control,
     handleSubmit,
     getValues,
     formState: { errors, isSubmitting },
   } = useForm<z.infer<typeof accountSchema>>({
     resolver: zodResolver(accountSchema),
+    defaultValues: { name: "", color: "#000000", is_primary: false },
   });
 
   const onSubmit = async (data: z.infer<typeof accountSchema>) => {
@@ -57,6 +60,26 @@ export default function CreateAccountForm() {
           {errors.color && (
             <p className="text-sm text-destructive">{errors.color.message}</p>
           )}
+        </div>
+      </div>
+      <div className="flex items-start gap-2">
+        <Controller
+          control={control}
+          name="is_primary"
+          render={({ field }) => (
+            <Checkbox
+              id="is_primary"
+              checked={field.value}
+              onCheckedChange={(checked) => field.onChange(checked === true)}
+            />
+          )}
+        />
+        <div className="grid gap-1">
+          <Label htmlFor="is_primary">Cuenta principal</Label>
+          <p className="text-sm text-muted-foreground">
+            Queda preseleccionada al filtrar movimientos y al cargar uno nuevo.
+            Podés marcar más de una: se usa la primera por orden alfabético.
+          </p>
         </div>
       </div>
       <div>

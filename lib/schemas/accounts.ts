@@ -11,6 +11,7 @@ export const accountSchema = z.object({
     .min(1, "El color es requerido")
     .max(7, "El color debe tener 7 caracteres como máximo")
     .regex(hexColorRegex, "Formato de color inválido"),
+  is_primary: z.boolean(),
 });
 
 export type createAccount = z.infer<typeof accountSchema>;
@@ -20,6 +21,7 @@ export type Account = {
   name: string;
   current_balance: number;
   color: string;
+  is_primary: boolean;
   created_at: string;
   updated_at: string;
   user_id: string;
