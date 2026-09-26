@@ -16,6 +16,7 @@ interface Props {
   onChange: (value: string) => void;
   placeholder?: string;
   allLabel?: string;
+  excludeId?: string;
 }
 
 export default function AccountSelect({
@@ -25,6 +26,7 @@ export default function AccountSelect({
   onChange,
   placeholder = "Selecciona una cuenta",
   allLabel,
+  excludeId,
 }: Props) {
   return (
     <Select value={value} onValueChange={onChange}>
@@ -33,7 +35,9 @@ export default function AccountSelect({
       </SelectTrigger>
       <SelectContent>
         {allLabel && <SelectItem value="all">{allLabel}</SelectItem>}
-        {accounts.map((account) => (
+        {accounts
+          .filter((account) => account.id !== excludeId)
+          .map((account) => (
           <SelectItem key={account.id} value={account.id}>
             <div className="flex items-center gap-2">
               <div

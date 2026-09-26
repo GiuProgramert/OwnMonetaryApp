@@ -19,6 +19,7 @@ CREATE OR REPLACE FUNCTION public.get_monthly_flow (
   from public.movements m
   join public.accounts a on a.id = m.account_id
   where a.user_id = (select auth.uid())
+    and m.transfer_id is null
     and (p_account_id is null or m.account_id = p_account_id)
     and (p_start_date is null or m.date >= p_start_date)
     and (p_end_date   is null or m.date <= p_end_date)

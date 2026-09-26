@@ -11,7 +11,9 @@ const TOP_COUNT = 5;
 
 export default async function TopExpensesCard({ filter }: Props) {
   const { data } = await getMovements(filter, { orderBy: "amount", type: "debit" });
-  const topExpenses = data.slice(0, TOP_COUNT);
+  const topExpenses = data
+    .filter((movement) => !movement.transfer_id)
+    .slice(0, TOP_COUNT);
 
   return (
     <Card>

@@ -124,7 +124,7 @@ where sub.account_id = a.id
 
 ## Funciones RPC del dashboard
 
-Tres funciones agregan sobre `movements` para el dashboard (`app/protected/page.tsx`), evitando el
+Tres funciones agregan sobre `movements` (las cinco, contando presupuestos, excluyen transferencias: ver [Transferencias](#transferencias-entre-cuentas)) para el dashboard (`app/protected/page.tsx`), evitando el
 límite de 1000 filas de PostgREST (`db.max_rows`): sumar en JS sobre filas crudas subcuenta en
 silencio al pasar ese umbral. Las tres son `security invoker` (nunca `security definer`: correrían
 con los permisos del dueño de la función y devolverían movimientos de todos los usuarios) y
@@ -142,6 +142,35 @@ Los tres parámetros de cada función son `nullable`: `null` significa "sin filt
 ⚠️ **Probarlas desde el SQL editor de Supabase no valida la seguridad.** El SQL editor corre como
 `postgres` y bypassea la RLS — una función que devolviera datos de otros usuarios se vería igual de
 correcta ahí. La verificación real es logueado como usuario normal desde la app.
+
+### Transferencias entre cuentas
+
+Una transferencia son **dos filas de `movements`** apareadas por `transfer_id`: un `debit` en la
+cuenta origen y un `credit` en la destino, ambas con el tipo fijo `Transferencia`
+(`transferMovementTypeId` en `lib/constants.ts`). El trigger de saldo mueve los dos saldos solo. Se
+escriben únicamente por RPC, que son `security invoker`, `set search_path = ''` y corren en una
+transacción (media transferencia sería descuadre permanente):
+
+| Función | Qué hace |
+| --- | --- |
+| `create_transfer(p_from_account_id, p_to_account_id, p_amount, p_date, p_description)` | Valida (cuentas distintas, ambas del usuario, monto > 0), inserta el par y devuelve el `transfer_id` |
+| `update_transfer(p_transfer_id, p_from_account_id, p_to_account_id, p_amount, p_date, p_description)` | Actualiza las dos filas; el trigger revierte/aplica saldos por `OLD`/`NEW.account_id` |
+| `delete_transfer(p_transfer_id)` | Borra las dos filas juntas |
+
+**Por qué las cinco agregaciones excluyen `transfer_id is not null`:** `get_movements_totals`,
+`get_expenses_by_movement_type`, `get_monthly_flow`, `get_budget_status` y `get_budget_history`
+filtran `m.transfer_id is null`. Una transferencia mueve plata entre cuentas propias pero no es
+ingreso ni gasto; sin el filtro inflaría ambos lados del período y consumiría tope de presupuesto.
+**Toda agregación nueva sobre `movements` tiene que llevar ese filtro**; olvidarla deja una
+inconsistencia silenciosa entre pantallas. `TopExpensesCard` no usa RPC y filtra en JS.
+
+Diagnóstico de pares desapareados (p. ej. tras borrar una cuenta que participó en transferencias,
+por el `ON DELETE CASCADE` de `movements.account_id`):
+
+```sql
+select transfer_id from public.movements
+where transfer_id is not null group by transfer_id having count(*) <> 2;
+```
 
 ## Presupuestos mensuales
 
@@ -197,6 +226,10 @@ una fila existente no dispara `trigger_update_account_balance` para la fila desc
 `ignoreDuplicates: true`, Postgres ni siquiera intenta el `UPDATE`). Reimportar un extracto no
 puede descuadrar el saldo.
 
+### `movements.transfer_id`
+
+`uuid` nullable, con índice `idx_movements_transfer`. `NULL` en los movimientos normales.
+
 ## Row Level Security (RLS)
 
 **Verificado el 2026-08-15.**
@@ -220,7 +253,7 @@ parecen:
 | --- | --- | --- |
 | `accounts` | Directa | `user_id = auth.uid()` |
 | `movements` | **Indirecta** | No tiene `user_id`. Se resuelve por `EXISTS` contra `accounts` vía `account_id` |
-| `movement_types` | Ninguna | Tabla compartida/global, sin dueño |
+| `movement_types` | Ninguna | Tabla compartida/global, sin dueño; escritura restringida por UUID literal (regla 4) |
 | `budgets` | Directa | `user_id = (select auth.uid())`. `movement_types` no tiene dueño, así que el presupuesto no puede heredarlo del tipo |
 | `budget_periods` | **Indirecta** | No tiene `user_id`. `EXISTS` contra `budgets` vía `budget_id`, el mismo modelo que `movements` contra `accounts` |
 
@@ -237,9 +270,14 @@ dueño**. Las políticas vigentes, con su DDL completo, están en
    [efectos secundarios](#efectos-secundarios-de-la-rls), punto 3.
 3. **Toda política de `INSERT` necesita `with_check`.** Es lo único que valida la fila entrante;
    `using` no aplica al `INSERT`.
-4. **`movement_types` es editable por cualquier usuario autenticado.** Hoy es correcto porque la app
-   es de un solo usuario. Si eso cambia, la tabla necesita `user_id` y scoping real — es cambio de
-   modelo, no de RLS.
+4. **`movement_types`: lectura abierta, escritura solo del dueño de la app.** `movement_types_read`
+   es `USING (true)`; `INSERT`/`UPDATE`/`DELETE` comparan `(select auth.uid())` contra el UUID del
+   dueño, escrito como literal en la política (no hay columna `user_id`). **La lectura sigue abierta
+   a propósito:** los nombres no son sensibles, y cerrarla al UUID del dueño haría que, si su id
+   cambiara, el `movement_types!inner` de `MOVEMENT_COLUMNS` vaciara en silencio la lista de
+   movimientos. ⚠️ Si el proyecto se recrea o se restaura y el usuario cambia de id, hay que editar
+   las tres políticas a mano; el síntoma es un error al crear/editar/borrar un tipo, sin más
+   explicación.
 
 ### Efectos secundarios de la RLS
 

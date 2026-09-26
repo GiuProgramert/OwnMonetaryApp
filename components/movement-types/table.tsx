@@ -10,6 +10,7 @@ import {
 import RecordCard from "@/components/record-card";
 import Link from "next/link";
 import { getMovementTypes } from "@/lib/services/movement-types";
+import { transferMovementTypeId } from "@/lib/constants";
 
 function MovementTypeActions({ id }: { id: string }) {
   return (
@@ -33,7 +34,7 @@ function MovementTypeActions({ id }: { id: string }) {
 }
 
 export default async function MovementTypesTable() {
-  const movementTypes = await getMovementTypes();
+  const movementTypes = await getMovementTypes({ includeTransferType: true });
 
   return (
     <div className="space-y-2">
@@ -77,9 +78,11 @@ export default async function MovementTypesTable() {
                       {new Date(movementType.updated_at).toLocaleDateString()}
                     </TableCell>
                     <TableCell>
-                      <div className="flex gap-2">
-                        <MovementTypeActions id={movementType.id} />
-                      </div>
+                      {movementType.id !== transferMovementTypeId && (
+                        <div className="flex gap-2">
+                          <MovementTypeActions id={movementType.id} />
+                        </div>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -100,7 +103,11 @@ export default async function MovementTypesTable() {
                       <span className="min-w-0 break-words">{movementType.name}</span>
                     </div>
                   }
-                  actions={<MovementTypeActions id={movementType.id} />}
+                  actions={
+                    movementType.id !== transferMovementTypeId ? (
+                      <MovementTypeActions id={movementType.id} />
+                    ) : undefined
+                  }
                   fields={[
                     {
                       label: "Descripción",

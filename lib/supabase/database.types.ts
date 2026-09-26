@@ -154,6 +154,7 @@ export type Database = {
           external_id: string | null
           id: string
           movement_type_id: string
+          transfer_id: string | null
           type: string
           updated_at: string | null
         }
@@ -166,6 +167,7 @@ export type Database = {
           external_id?: string | null
           id?: string
           movement_type_id: string
+          transfer_id?: string | null
           type: string
           updated_at?: string | null
         }
@@ -178,6 +180,7 @@ export type Database = {
           external_id?: string | null
           id?: string
           movement_type_id?: string
+          transfer_id?: string | null
           type?: string
           updated_at?: string | null
         }
@@ -203,6 +206,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_transfer: {
+        Args: {
+          p_amount: number
+          p_date: string
+          p_description: string
+          p_from_account_id: string
+          p_to_account_id: string
+        }
+        Returns: string
+      }
+      delete_transfer: { Args: { p_transfer_id: string }; Returns: undefined }
       ensure_budget_periods: { Args: { p_month?: string }; Returns: number }
       get_budget_history: {
         Args: { p_budget_id: string; p_months?: number }
@@ -260,6 +274,17 @@ export type Database = {
           expense: number
           income: number
         }[]
+      }
+      update_transfer: {
+        Args: {
+          p_amount: number
+          p_date: string
+          p_description: string
+          p_from_account_id: string
+          p_to_account_id: string
+          p_transfer_id: string
+        }
+        Returns: undefined
       }
     }
     Enums: {

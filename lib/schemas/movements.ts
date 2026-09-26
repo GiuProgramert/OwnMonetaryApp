@@ -39,8 +39,6 @@ export const importedMovementSchema = movementSchema.extend({
 
 export type createImportedMovement = z.infer<typeof importedMovementSchema>;
 
-// TODO: transferencias entre cuentas (implica cambio de modelo de datos)
-
 export type Movement = {
   id: string;
   date: string;
@@ -49,6 +47,7 @@ export type Movement = {
   type: Type;
   account_id: string;
   movement_type_id: string;
+  transfer_id: string | null;
   created_at: string;
   updated_at: string;
   accounts: Pick<Account, "name" | "color" | "user_id">;

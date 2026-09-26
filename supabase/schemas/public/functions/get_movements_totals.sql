@@ -18,6 +18,7 @@ CREATE OR REPLACE FUNCTION public.get_movements_totals (
   from public.movements m
   join public.accounts a on a.id = m.account_id
   where a.user_id = (select auth.uid())
+    and m.transfer_id is null
     and (p_account_id       is null or m.account_id       = p_account_id)
     and (p_movement_type_id is null or m.movement_type_id = p_movement_type_id)
     and (p_start_date is null or m.date >= p_start_date)

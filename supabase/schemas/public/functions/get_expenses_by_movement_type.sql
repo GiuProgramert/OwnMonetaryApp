@@ -18,6 +18,7 @@ CREATE OR REPLACE FUNCTION public.get_expenses_by_movement_type (
   join public.accounts a on a.id = m.account_id
   join public.movement_types mt on mt.id = m.movement_type_id
   where m.type = 'debit'
+    and m.transfer_id is null
     and a.user_id = (select auth.uid())
     and (p_account_id is null or m.account_id = p_account_id)
     and (p_start_date is null or m.date >= p_start_date)

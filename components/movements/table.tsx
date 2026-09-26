@@ -1,4 +1,4 @@
-import { MovementFilter } from "@/lib/schemas/movements";
+import { Movement, MovementFilter } from "@/lib/schemas/movements";
 import getMovements, { MOVEMENTS_PAGE_SIZE } from "@/lib/services/movements";
 import {
   Table,
@@ -12,31 +12,63 @@ import RecordCard from "@/components/record-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Pencil, TrashIcon } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, Pencil, TrashIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Props {
   searchParams: MovementFilter;
 }
 
-function MovementActions({ id }: { id: string }) {
+function MovementActions({
+  id,
+  transferId,
+}: {
+  id: string;
+  transferId: string | null;
+}) {
+  const editHref = transferId
+    ? `/protected/transfers/edit/${transferId}`
+    : `/protected/movements/edit/${id}`;
+  const deleteHref = transferId
+    ? `/protected/transfers/delete/${transferId}`
+    : `/protected/movements/delete/${id}`;
+
   return (
     <>
       <Link
         aria-label="Editar movimiento"
         className="flex justify-center items-center rounded-md hover:bg-blue-500 hover:text-white transition-colors duration-300 h-10 w-10"
-        href={`/protected/movements/edit/${id}`}
+        href={editHref}
       >
         <Pencil className="h-6 w-6" />
       </Link>
       <Link
         aria-label="Eliminar movimiento"
         className="flex justify-center items-center rounded-md hover:bg-red-500 hover:text-white transition-colors duration-300 h-10 w-10"
-        href={`/protected/movements/delete/${id}`}
+        href={deleteHref}
       >
         <TrashIcon className="h-6 w-6" />
       </Link>
     </>
+  );
+}
+
+function NatureBadge({ movement }: { movement: Movement }) {
+  if (movement.transfer_id) {
+    const Icon = movement.type === "debit" ? ArrowUpRight : ArrowDownLeft;
+
+    return (
+      <Badge variant="secondary" className="gap-1">
+        <Icon className="h-3 w-3" />
+        Transferencia
+      </Badge>
+    );
+  }
+
+  return (
+    <Badge variant={movement.type === "credit" ? "default" : "destructive"}>
+      {movement.type === "credit" ? "Crédito" : "Débito"}
+    </Badge>
   );
 }
 
@@ -148,17 +180,11 @@ export default async function MovementsTable({ searchParams }: Props) {
                       />
                     </TableCell>
                     <TableCell>
-                      <Badge
-                        variant={
-                          movement.type === "credit" ? "default" : "destructive"
-                        }
-                      >
-                        {movement.type === "credit" ? "Crédito" : "Débito"}
-                      </Badge>
+                      <NatureBadge movement={movement} />
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-2">
-                        <MovementActions id={movement.id} />
+                        <MovementActions id={movement.id} transferId={movement.transfer_id} />
                       </div>
                     </TableCell>
                   </TableRow>
@@ -176,7 +202,7 @@ export default async function MovementsTable({ searchParams }: Props) {
                       {movement.description}
                     </span>
                   }
-                  actions={<MovementActions id={movement.id} />}
+                  actions={<MovementActions id={movement.id} transferId={movement.transfer_id} />}
                   fields={[
                     {
                       label: "Fecha",
@@ -211,15 +237,7 @@ export default async function MovementsTable({ searchParams }: Props) {
                     {
                       label: "Naturaleza",
                       value: (
-                        <Badge
-                          variant={
-                            movement.type === "credit"
-                              ? "default"
-                              : "destructive"
-                          }
-                        >
-                          {movement.type === "credit" ? "Crédito" : "Débito"}
-                        </Badge>
+                        <NatureBadge movement={movement} />
                       ),
                     },
                   ]}

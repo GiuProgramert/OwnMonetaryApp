@@ -2,6 +2,7 @@ import DeleteMovementTypeForm from "@/components/movement-types/delete-form";
 import FormContainer from "@/components/form-container";
 import { getMovementTypeById } from "@/lib/services/movement-types";
 import { notFound } from "next/navigation";
+import { transferMovementTypeId } from "@/lib/constants";
 
 export default async function DeleteMovementTypePage({
   params,
@@ -11,7 +12,7 @@ export default async function DeleteMovementTypePage({
   const { id } = await params;
   const movementType = await getMovementTypeById(id);
 
-  if (!movementType) {
+  if (!movementType || movementType.id === transferMovementTypeId) {
     notFound();
   }
 

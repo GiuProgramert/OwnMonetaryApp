@@ -1,7 +1,7 @@
 import DeleteMovementForm from "@/components/movements/delete-form";
 import FormContainer from "@/components/form-container";
 import { getMovementById } from "@/lib/services/movements";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 export default async function DeleteMovementPage({
   params,
@@ -13,6 +13,10 @@ export default async function DeleteMovementPage({
 
   if (!movement) {
     notFound();
+  }
+
+  if (movement.transfer_id) {
+    redirect(`/protected/transfers/delete/${movement.transfer_id}`);
   }
 
   return (

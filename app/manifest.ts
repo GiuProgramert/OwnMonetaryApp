@@ -7,6 +7,10 @@ export default function manifest(): MetadataRoute.Manifest {
     description:
       "Control de cuentas, movimientos y presupuestos personales.",
     start_url: "/protected",
+    // Scope en la raíz: el redirect a /auth/login cuando no hay sesión queda dentro
+    // de la app instalada. Con el scope por defecto (/protected/) Chrome abriría el
+    // login en una pestaña del navegador en vez de la ventana standalone.
+    scope: "/",
     display: "standalone",
     background_color: "#0F3D2E",
     theme_color: "#0F3D2E",

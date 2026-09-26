@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { MovementFilter } from "@/lib/schemas/movements";
 import { getAccounts } from "@/lib/services/accounts";
 import { getMovementTypes } from "@/lib/services/movement-types";
-import { Plus, Upload } from "lucide-react";
+import { ArrowLeftRight, Plus, Upload } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
 
@@ -49,6 +49,12 @@ export default async function MovementsPage({
           <Link href="/protected/movements/import">
             <Upload />
             <span>Importar</span>
+          </Link>
+        </Button>
+        <Button asChild variant="outline">
+          <Link href="/protected/transfers/create">
+            <ArrowLeftRight />
+            <span>Transferir</span>
           </Link>
         </Button>
       </div>

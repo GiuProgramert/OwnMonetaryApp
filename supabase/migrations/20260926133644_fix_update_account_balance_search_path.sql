@@ -1,3 +1,13 @@
+-- create_transfer corre con search_path = '' y ese valor rige también para el trigger que dispara:
+-- 'accounts' sin calificar fallaba con: relation "accounts" does not exist.
+--
+-- Dos cambios, y hacen falta los dos:
+--   1. Calificar las tablas como public.accounts — arregla el error.
+--   2. SET search_path TO '' propio — evita que vuelva a pasar. Sin esto la función sigue
+--      heredando el search_path de quien la dispare, así que el próximo caller con un
+--      search_path distinto la rompe de nuevo, y el síntoma aparece lejos de la causa.
+-- NOW() y el resto de lo que usa esta función viven en pg_catalog, que se busca siempre,
+-- así que el search_path vacío no afecta nada más acá.
 CREATE OR REPLACE FUNCTION public.update_account_balance()
   RETURNS TRIGGER
   LANGUAGE plpgsql
@@ -50,4 +60,3 @@ BEGIN
 END;
 $function$;
 
-GRANT EXECUTE ON FUNCTION "public"."update_account_balance"() TO PUBLIC, "anon", "authenticated", "postgres", "service_role";

@@ -1,14 +1,21 @@
 import type { MovementType } from "@/lib/schemas/movement-types";
 import { createClient } from "@/lib/supabase/server";
-import { notFoundDetailMessage } from "../constants";
+import { notFoundDetailMessage, transferMovementTypeId } from "../constants";
 
-export async function getMovementTypes() {
+export async function getMovementTypes({
+  includeTransferType = false,
+}: { includeTransferType?: boolean } = {}) {
   const supabase = await createClient();
 
-  const { data, error } = await supabase
+  let query = supabase
     .from("movement_types")
-    .select("id,name,description,color,created_at,updated_at")
-    .order("name", { ascending: true });
+    .select("id,name,description,color,created_at,updated_at");
+
+  if (!includeTransferType) {
+    query = query.neq("id", transferMovementTypeId);
+  }
+
+  const { data, error } = await query.order("name", { ascending: true });
 
   if (error) {
     throw new Error(error.message);

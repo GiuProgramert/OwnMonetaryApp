@@ -15,8 +15,11 @@ export const config = {
      * - images - .svg, .png, .jpg, .jpeg, .gif, .webp
      * - .mjs, .js - static assets served from /public (p. ej. el worker de pdfjs-dist);
      *   ninguna URL de página autenticada termina en estas extensiones.
+     * - .webmanifest - el manifest PWA (/manifest.webmanifest). Chrome lo pide sin
+     *   cookies, así que si el middleware lo redirige a /auth/login la app deja de
+     *   ser instalable.
      * Feel free to modify this pattern to include more paths.
      */
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|mjs|js)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|mjs|js|webmanifest)$).*)",
   ],
 };

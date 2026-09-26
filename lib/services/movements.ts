@@ -12,6 +12,7 @@ const MOVEMENT_COLUMNS = `
   type,
   account_id,
   movement_type_id,
+  transfer_id,
   created_at,
   updated_at,
   accounts!inner(name,color,user_id),

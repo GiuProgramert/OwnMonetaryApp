@@ -81,6 +81,21 @@ siempre el mes calendario (`?month=YYYY-MM`): no usa `DateRangeFilter` ni `resol
 `getBudgetStatus`, `ensure_budget_periods` corre antes que `get_budget_status` y escribe durante el
 render, así que esa lectura no se cachea.
 
+### Transfers (`app/protected/transfers`)
+
+Traspaso entre dos cuentas propias: dos filas de `movements` apareadas por `transfer_id`, escritas
+solo por las RPC `create_transfer` / `update_transfer` / `delete_transfer`
+(`lib/services/transfers.client.ts`); ningún componente inserta filas de `movements` para una
+transferencia. Estructura: `lib/schemas/transfers.ts`, `lib/services/transfers{,.client}.ts`,
+`components/transfers/`, `app/protected/transfers/{create,edit/[id],delete/[id]}` (el `[id]` es el
+`transfer_id`). Sin listado ni item de sidebar: viven dentro de movimientos. Ver
+[`docs/database.md`](docs/database.md#transferencias-entre-cuentas).
+
+**Dos reglas:** (1) toda agregación nueva sobre `movements` tiene que excluir
+`transfer_id is not null`; (2) `movement_types` ya no es escribible por cualquier autenticado: solo
+el dueño (UUID literal en la política), y el tipo `Transferencia` (`transferMovementTypeId`) no se
+ofrece en selects ni se edita/borra.
+
 ### Auth & Supabase clients
 
 Three separate Supabase client constructors exist for three contexts — use the one matching where the code runs:

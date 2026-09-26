@@ -3,7 +3,7 @@ import FormContainer from "@/components/form-container";
 import { getMovementById } from "@/lib/services/movements";
 import { getAccounts } from "@/lib/services/accounts";
 import { getMovementTypes } from "@/lib/services/movement-types";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 export default async function EditMovementPage({
   params,
@@ -19,6 +19,10 @@ export default async function EditMovementPage({
 
   if (!movement) {
     notFound();
+  }
+
+  if (movement.transfer_id) {
+    redirect(`/protected/transfers/edit/${movement.transfer_id}`);
   }
 
   return (

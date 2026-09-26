@@ -18,15 +18,24 @@ CREATE TRIGGER trigger_movement_types_updated_at
   FOR EACH ROW
   EXECUTE FUNCTION public.update_updated_at();
 
+CREATE POLICY "movement_types_delete" ON "public"."movement_types"
+  FOR DELETE
+  TO "authenticated"
+  USING ((( SELECT auth.uid() AS uid) = 'd70b4515-6934-4111-b329-fbc57df0ce15'::uuid));
+
+CREATE POLICY "movement_types_insert" ON "public"."movement_types"
+  FOR INSERT
+  TO "authenticated"
+  WITH CHECK ((( SELECT auth.uid() AS uid) = 'd70b4515-6934-4111-b329-fbc57df0ce15'::uuid));
+
 CREATE POLICY "movement_types_read" ON "public"."movement_types"
   FOR SELECT
   TO "authenticated"
   USING (true);
 
-CREATE POLICY "movement_types_write" ON "public"."movement_types"
-  FOR ALL
+CREATE POLICY "movement_types_update" ON "public"."movement_types"
+  FOR UPDATE
   TO "authenticated"
-  USING (true)
-  WITH CHECK (true);
+  USING ((( SELECT auth.uid() AS uid) = 'd70b4515-6934-4111-b329-fbc57df0ce15'::uuid));
 
 GRANT DELETE, INSERT, MAINTAIN, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE ON TABLE "public"."movement_types" TO "anon", "authenticated", "postgres", "service_role";

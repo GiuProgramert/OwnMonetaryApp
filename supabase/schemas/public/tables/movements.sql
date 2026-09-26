@@ -9,6 +9,7 @@ CREATE TABLE "public"."movements" (
   "created_at"       timestamp with time zone DEFAULT now(),
   "updated_at"       timestamp with time zone DEFAULT now(),
   "external_id"      text,
+  "transfer_id"      uuid,
   CONSTRAINT "movements_account_id_fkey" FOREIGN KEY (account_id) REFERENCES public.accounts(id) ON DELETE CASCADE,
   CONSTRAINT "movements_amount_check" CHECK ((amount > (0)::numeric)),
   CONSTRAINT "movements_movement_type_id_fkey" FOREIGN KEY (movement_type_id) REFERENCES public.movement_types(id) ON DELETE RESTRICT,
@@ -22,6 +23,8 @@ ALTER TABLE "public"."movements"
 CREATE INDEX idx_movements_account ON public.movements USING btree (account_id);
 
 CREATE INDEX idx_movements_date ON public.movements USING btree (date);
+
+CREATE INDEX idx_movements_transfer ON public.movements USING btree (transfer_id);
 
 CREATE INDEX idx_movements_type ON public.movements USING btree (movement_type_id);
 

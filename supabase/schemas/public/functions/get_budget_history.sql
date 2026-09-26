@@ -24,6 +24,7 @@ CREATE OR REPLACE FUNCTION public.get_budget_history (
     where m.movement_type_id = b.movement_type_id
       and a.user_id = (select auth.uid())
       and m.type = 'debit'
+      and m.transfer_id is null
       and m.date >= bp.period_month
       and m.date <  (bp.period_month + interval '1 month')::date
   ) s on true

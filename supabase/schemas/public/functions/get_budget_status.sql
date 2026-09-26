@@ -37,6 +37,7 @@ CREATE OR REPLACE FUNCTION public.get_budget_status (
     where m.movement_type_id = b.movement_type_id
       and a.user_id = (select auth.uid())
       and m.type = 'debit'
+      and m.transfer_id is null
       and m.date >= t.month_start
       and m.date <  (t.month_start + interval '1 month')::date
   ) s on true
