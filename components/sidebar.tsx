@@ -5,7 +5,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { isNavItemActive, navItems } from "@/lib/nav-items";
-import { DollarSign, ChevronLeft } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
+import AppLogo from "@/components/app-logo";
 
 export default function Sidebar() {
   const pathname = usePathname();
@@ -22,11 +23,16 @@ export default function Sidebar() {
         <div className="flex items-center justify-between p-3 border-b border-b-foreground/10">
           <div className="flex items-center gap-2 min-w-0">
             <div className="ml-1">
-              <DollarSign
-                className={cn("text-foreground", open ? "w-6 h-6" : "w-5 h-5")}
-              />
+              <AppLogo size={open ? 28 : 24} />
             </div>
-            {<span className={cn("font-semibold truncate", open ? "mx-auto" : "sr-only")}>OwnMonetaryApp</span>}
+            <span
+              className={cn(
+                "font-semibold truncate",
+                open ? "mx-auto" : "sr-only"
+              )}
+            >
+              OwnMonetaryApp
+            </span>
           </div>
 
           <button
