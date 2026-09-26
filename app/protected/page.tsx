@@ -9,6 +9,7 @@ import { DashboardFilter } from "@/lib/schemas/dashboard";
 import DashboardFilters from "@/components/dashboard/filters";
 import ChartSkeleton from "@/components/dashboard/chart-skeleton";
 import BalanceDistributionCard from "@/components/dashboard/balance-distribution-card";
+import BudgetsCard from "@/components/dashboard/budgets-card";
 import ExpensesByTypeCard from "@/components/dashboard/expenses-by-type-card";
 import MonthlyFlowCard from "@/components/dashboard/monthly-flow-card";
 import NetWorthCard from "@/components/dashboard/net-worth-card";
@@ -94,6 +95,10 @@ export default async function ProtectedPage({
 
       <Suspense fallback={<ChartCardSkeleton />}>
         <MonthlyFlowCard filter={filter} />
+      </Suspense>
+
+      <Suspense fallback={<ChartCardSkeleton />}>
+        <BudgetsCard />
       </Suspense>
 
       <div className="grid gap-4 lg:grid-cols-2">
