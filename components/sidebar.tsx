@@ -4,7 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { Home, User, Activity, DollarSign, Shapes, ChevronLeft } from "lucide-react";
+import { Home, User, Activity, DollarSign, Shapes, Target, ChevronLeft } from "lucide-react";
 
 const navItems: { label: string; href: string; icon: React.ReactNode }[] = [
   {
@@ -26,7 +26,12 @@ const navItems: { label: string; href: string; icon: React.ReactNode }[] = [
     label: "Tipos de movimientos",
     href: "/protected/movement-types",
     icon: <Shapes className="w-5 h-5" />,
-  }
+  },
+  {
+    label: "Presupuestos",
+    href: "/protected/budgets",
+    icon: <Target className="w-5 h-5" />,
+  },
 ];
 
 export default function Sidebar() {

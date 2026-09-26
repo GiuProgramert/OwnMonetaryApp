@@ -143,6 +143,39 @@ Los tres parámetros de cada función son `nullable`: `null` significa "sin filt
 `postgres` y bypassea la RLS — una función que devolviera datos de otros usuarios se vería igual de
 correcta ahí. La verificación real es logueado como usuario normal desde la app.
 
+## Presupuestos mensuales
+
+Dos tablas y tres funciones RPC (`supabase/migrations/*_add_budgets.sql`, esquema en
+`supabase/schemas/public/`). Plan de origen: `docs/plans/budgets-implementation.md`.
+
+- **`budgets`** — la configuración: un tope por `(user_id, movement_type_id)` (único), `is_active`.
+- **`budget_periods`** — el histórico **del tope**: una fila por `(budget_id, period_month)`, con el
+  tope que regía ese mes. `period_month` es siempre el día 1 (`CHECK`): el único
+  `(budget_id, period_month)` es lo que hace idempotentes el `on conflict do nothing` de
+  `ensure_budget_periods` y el `upsert` de `updateBudgetClient`.
+
+| Función | Devuelve | Uso |
+| --- | --- | --- |
+| `ensure_budget_periods(p_month)` | `integer` (filas creadas). **`volatile`**: es la única que escribe | `lib/services/budgets.ts` → `getBudgetStatus`, siempre **antes** de `get_budget_status` |
+| `get_budget_status(p_month)` | `(budget_id, movement_type_id, name, color, amount_limit, spent, is_active)`, una fila por presupuesto (no filtra `is_active`) | `getBudgetStatus` |
+| `get_budget_history(p_budget_id, p_months)` | `(period_month, amount_limit, spent)`, del mes más reciente al más viejo | `getBudgetHistory` |
+
+Las tres son `security invoker` con `set search_path = ''`, como las del dashboard. `ensure_budget_periods`
+rellena desde el mes de creación del presupuesto hasta el mes en curso (nunca meses futuros ni previos a
+la creación) y solo para presupuestos activos. `get_budget_history` lee `bp.amount` sin `coalesce`
+contra `budgets.amount`: el histórico muestra el tope de *ese* mes, no el actual. Un mes futuro sin fila
+se proyecta con el tope configurado (`get_budget_status` sí hace `coalesce`).
+
+### Por qué no hay trigger que descuente el presupuesto
+
+**Lo gastado se calcula al leer (suma de `movements` de tipo `debit` por tipo y mes); no hay columna
+`spent` ni trigger.** Es a propósito, y es el mismo problema que
+[El saldo es incremental, no calculado](#3-el-saldo-es-incremental-no-calculado): un saldo guardado y
+descontado por trigger obligaría a que el `UPDATE` de un movimiento revierta el efecto viejo y aplique
+el nuevo, incluso moviendo plata entre dos presupuestos (cambia `movement_type_id`) o entre dos meses
+(cambia `date`), y `bulkCreateMovements` (upsert de 200 filas) lo dispararía fila por fila. Cualquier
+agujero queda como descuadre permanente. **No agregar ese trigger para "completar" la feature.**
+
 ## Índices y restricciones
 
 ### `movements.external_id`
@@ -188,6 +221,8 @@ parecen:
 | `accounts` | Directa | `user_id = auth.uid()` |
 | `movements` | **Indirecta** | No tiene `user_id`. Se resuelve por `EXISTS` contra `accounts` vía `account_id` |
 | `movement_types` | Ninguna | Tabla compartida/global, sin dueño |
+| `budgets` | Directa | `user_id = (select auth.uid())`. `movement_types` no tiene dueño, así que el presupuesto no puede heredarlo del tipo |
+| `budget_periods` | **Indirecta** | No tiene `user_id`. `EXISTS` contra `budgets` vía `budget_id`, el mismo modelo que `movements` contra `accounts` |
 
 Que `movements` no tenga `user_id` es lo que obliga a que todas sus políticas lleven la subconsulta.
 Una política de `movements` que solo referencie columnas de `movements` **no está scopeando por

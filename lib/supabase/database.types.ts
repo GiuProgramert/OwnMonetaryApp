@@ -44,6 +44,79 @@ export type Database = {
         }
         Relationships: []
       }
+      budget_periods: {
+        Row: {
+          amount: number
+          budget_id: string
+          created_at: string | null
+          id: string
+          period_month: string
+          updated_at: string | null
+        }
+        Insert: {
+          amount: number
+          budget_id: string
+          created_at?: string | null
+          id?: string
+          period_month: string
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number
+          budget_id?: string
+          created_at?: string | null
+          id?: string
+          period_month?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_periods_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
+            referencedRelation: "budgets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      budgets: {
+        Row: {
+          amount: number
+          created_at: string | null
+          id: string
+          is_active: boolean
+          movement_type_id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          id?: string
+          is_active?: boolean
+          movement_type_id: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          id?: string
+          is_active?: boolean
+          movement_type_id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budgets_movement_type_id_fkey"
+            columns: ["movement_type_id"]
+            isOneToOne: false
+            referencedRelation: "movement_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       movement_types: {
         Row: {
           color: string
@@ -130,6 +203,27 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      ensure_budget_periods: { Args: { p_month?: string }; Returns: number }
+      get_budget_history: {
+        Args: { p_budget_id: string; p_months?: number }
+        Returns: {
+          amount_limit: number
+          period_month: string
+          spent: number
+        }[]
+      }
+      get_budget_status: {
+        Args: { p_month?: string }
+        Returns: {
+          amount_limit: number
+          budget_id: string
+          color: string
+          is_active: boolean
+          movement_type_id: string
+          name: string
+          spent: number
+        }[]
+      }
       get_expenses_by_movement_type: {
         Args: {
           p_account_id?: string

@@ -67,6 +67,20 @@ versioned in `supabase/schemas/public/functions/` and documented in
 draw already-aggregated data passed via props; the server component that fetches with the RPC wraps
 each chart in a `<Card>` and handles the empty state.
 
+### Budgets (`app/protected/budgets`)
+
+Tope de gasto mensual por tipo de movimiento. Estructura: `lib/schemas/budgets.ts`,
+`lib/services/budgets.ts` (server) / `budgets.client.ts` (mutaciones), `lib/budgets/month.ts` (helpers
+de mes en hora local), `components/budgets/`, `app/protected/budgets/**` (incluye `[id]` = histórico).
+Tablas `budgets` (config) y `budget_periods` (tope de cada mes), más las RPC `ensure_budget_periods`,
+`get_budget_status` y `get_budget_history`; ver [`docs/database.md`](docs/database.md#presupuestos-mensuales).
+
+**Lo gastado se calcula por RPC y nunca se guarda: no hay columna `spent` ni trigger que descuente**
+(mismo problema que `accounts.current_balance`; el porqué está en `docs/database.md`). El mes es
+siempre el mes calendario (`?month=YYYY-MM`): no usa `DateRangeFilter` ni `resolveDateRange`. En
+`getBudgetStatus`, `ensure_budget_periods` corre antes que `get_budget_status` y escribe durante el
+render, así que esa lectura no se cachea.
+
 ### Auth & Supabase clients
 
 Three separate Supabase client constructors exist for three contexts — use the one matching where the code runs:
