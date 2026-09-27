@@ -4,8 +4,8 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getAccounts } from "@/lib/services/accounts";
 import { resolveAccountFilter } from "@/lib/accounts/primary";
-import { resolveDateRange } from "@/lib/dashboard/date-range";
-import { DashboardFilter } from "@/lib/schemas/dashboard";
+import { resolveDateRange, resolveDailyExpensesRange } from "@/lib/dashboard/date-range";
+import { DashboardFilter, DailyExpensesFilter as DailyExpensesFilterType } from "@/lib/schemas/dashboard";
 
 import DashboardFilters from "@/components/dashboard/filters";
 import ChartSkeleton from "@/components/dashboard/chart-skeleton";
@@ -14,6 +14,7 @@ import BudgetsCard from "@/components/dashboard/budgets-card";
 import UpcomingDebtsCard from "@/components/dashboard/upcoming-debts-card";
 import ExpensesByTypeCard from "@/components/dashboard/expenses-by-type-card";
 import MonthlyFlowCard from "@/components/dashboard/monthly-flow-card";
+import DailyExpensesCard from "@/components/dashboard/daily-expenses-card";
 import NetWorthCard from "@/components/dashboard/net-worth-card";
 import RecentMovementsCard from "@/components/dashboard/recent-movements-card";
 import TopExpensesCard from "@/components/dashboard/top-expenses-card";
@@ -28,6 +29,10 @@ export default async function ProtectedPage({
     accountId?: string;
     startDate?: string;
     endDate?: string;
+    dailyRange?: string;
+    dailyStart?: string;
+    dailyEnd?: string;
+    dailyTypes?: string;
   }>;
 }) {
   const supabase = await createClient();
@@ -47,6 +52,14 @@ export default async function ProtectedPage({
     accountId: accountFilter.accountId,
     startDate,
     endDate,
+  };
+
+  const dailyRange = resolveDailyExpensesRange(rawParams);
+  const dailyExpensesFilter: DailyExpensesFilterType = {
+    accountId: accountFilter.accountId,
+    startDate: dailyRange.startDate,
+    endDate: dailyRange.endDate,
+    showAllTypes: rawParams.dailyTypes === "all",
   };
 
   const movementFilter = {
@@ -100,6 +113,10 @@ export default async function ProtectedPage({
 
       <Suspense fallback={<ChartCardSkeleton />}>
         <MonthlyFlowCard filter={filter} />
+      </Suspense>
+
+      <Suspense fallback={<ChartCardSkeleton />}>
+        <DailyExpensesCard filter={dailyExpensesFilter} preset={dailyRange.preset} />
       </Suspense>
 
       <Suspense fallback={<ChartCardSkeleton />}>

@@ -317,6 +317,21 @@ export type Database = {
           spent: number
         }[]
       }
+      get_daily_expenses_by_movement_type: {
+        Args: {
+          p_account_id?: string
+          p_end_date: string
+          p_start_date: string
+        }
+        Returns: {
+          amounts: number[]
+          color: string
+          days: string[]
+          movement_type_id: string
+          name: string
+          total: number
+        }[]
+      }
       get_debts_status: {
         Args: { p_debt_id?: string }
         Returns: {

@@ -33,3 +33,29 @@ export type MonthlyFlow = {
   expense: number;
   net: number;
 };
+
+export type DailyExpensesFilter = {
+  accountId: string | undefined;
+  startDate: string;
+  endDate: string;
+  showAllTypes: boolean;
+};
+
+export type DailyExpensesSeries = {
+  id: string;
+  name: string;
+  color: string;
+  total: number;
+};
+
+export type DailyExpensesPoint = {
+  day: string;
+  dayLabel: string;
+  [seriesId: string]: string | number;
+};
+
+export type DailyExpenses = {
+  series: DailyExpensesSeries[];
+  points: DailyExpensesPoint[];
+  groupedCount: number;
+};

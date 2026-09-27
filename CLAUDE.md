@@ -61,12 +61,20 @@ pattern as `movements`. Filters are shared with `movements` via
 **All aggregation for this module goes through Postgres RPC functions, never by summing raw rows in
 JS.** PostgREST caps reads at 1000 rows (`db.max_rows`); an aggregation that pages through rows and
 sums client-side silently undercounts once a user crosses that threshold. `getMovementsTotals`
-(`lib/services/movements.ts`) also uses this pattern, so it stays correct at scale too. The three RPC
-functions (`get_expenses_by_movement_type`, `get_movements_totals`, `get_monthly_flow`) are
-versioned in `supabase/schemas/public/functions/` and documented in
-[`docs/database.md`](docs/database.md#funciones-rpc-del-dashboard). Charts are `"use client"` (Recharts needs the DOM) but only
-draw already-aggregated data passed via props; the server component that fetches with the RPC wraps
-each chart in a `<Card>` and handles the empty state.
+(`lib/services/movements.ts`) also uses this pattern, so it stays correct at scale too. The four RPC
+functions (`get_expenses_by_movement_type`, `get_movements_totals`, `get_monthly_flow`,
+`get_daily_expenses_by_movement_type`) are versioned in `supabase/schemas/public/functions/` and
+documented in [`docs/database.md`](docs/database.md#funciones-rpc-del-dashboard). Charts are
+`"use client"` (Recharts needs the DOM) but only draw already-aggregated data passed via props; the
+server component that fetches with the RPC wraps each chart in a `<Card>` and handles the empty
+state.
+
+The daily-expenses card (`components/dashboard/daily-expenses-card.tsx`) has **its own period,
+independent of the page's `startDate`/`endDate` filter** — it reads `dailyRange` (`7d` | `30d` |
+`custom`, default `30d`), `dailyStart`/`dailyEnd` (only with `dailyRange=custom`, capped at 92 days)
+and `dailyTypes` (`all` to disable the top-8-plus-"Otros" grouping) from the URL, resolved server-side
+by `resolveDailyExpensesRange` (`lib/dashboard/date-range.ts`). It still follows the page's account
+filter (`accountFilter.accountId`).
 
 ### Filtro de cuenta y cuenta principal
 

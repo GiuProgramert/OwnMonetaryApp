@@ -124,9 +124,9 @@ where sub.account_id = a.id
 
 ## Funciones RPC del dashboard
 
-Tres funciones agregan sobre `movements` (las cinco, contando presupuestos, excluyen transferencias: ver [Transferencias](#transferencias-entre-cuentas)) para el dashboard (`app/protected/page.tsx`), evitando el
+Cuatro funciones agregan sobre `movements` (las seis, contando presupuestos, excluyen transferencias: ver [Transferencias](#transferencias-entre-cuentas)) para el dashboard (`app/protected/page.tsx`), evitando el
 límite de 1000 filas de PostgREST (`db.max_rows`): sumar en JS sobre filas crudas subcuenta en
-silencio al pasar ese umbral. Las tres son `security invoker` (nunca `security definer`: correrían
+silencio al pasar ese umbral. Las cuatro son `security invoker` (nunca `security definer`: correrían
 con los permisos del dueño de la función y devolverían movimientos de todos los usuarios) y
 `set search_path = ''`, así que la RLS del usuario que llama sigue aplicando dentro de la función.
 Los cuerpos están en `supabase/schemas/public/functions/`.
@@ -136,8 +136,16 @@ Los cuerpos están en `supabase/schemas/public/functions/`.
 | `get_expenses_by_movement_type(p_account_id, p_start_date, p_end_date)` | `(movement_type_id, name, color, total)` por tipo, solo `debit` | `lib/services/dashboard.ts` → `getExpensesByMovementType` |
 | `get_movements_totals(p_account_id, p_movement_type_id, p_start_date, p_end_date)` | `(income, expense)` | `lib/services/movements.ts` → `getMovementsTotals` (consumida también por `components/movements/totals.tsx`) |
 | `get_monthly_flow(p_account_id, p_start_date, p_end_date)` | `(month, income, expense)`, un mes por fila **solo si tiene movimientos** | `lib/services/dashboard.ts` → `getMonthlyFlow`, que rellena los meses vacíos del rango antes de pasarlo al gráfico |
+| `get_daily_expenses_by_movement_type(p_start_date, p_end_date, p_account_id)` | `(movement_type_id, name, color, total, days, amounts)`, **una fila por tipo** con arrays de días y montos, solo `debit` | `lib/services/dashboard.ts` → `getDailyExpensesByMovementType`, que rellena los días vacíos y agrupa en "Otros" |
 
-Los tres parámetros de cada función son `nullable`: `null` significa "sin filtrar".
+Los parámetros de cada función son `nullable` (salvo `p_start_date`/`p_end_date` en
+`get_daily_expenses_by_movement_type`, sin default a propósito): `null` significa "sin filtrar".
+
+**Por qué `get_daily_expenses_by_movement_type` devuelve una fila por tipo y no una por
+`(día, tipo)`:** con 92 días (el tope del rango "Personalizado") y 11 tipos, una fila por día y tipo
+ya son 1012 filas, y PostgREST corta en 1000 (`db.max_rows`) sin avisar. Agrupando por tipo y
+devolviendo `days`/`amounts` como arrays alineados (`array_agg(... order by day)`), la función nunca
+supera una fila por tipo de movimiento del usuario.
 
 ⚠️ **Probarlas desde el SQL editor de Supabase no valida la seguridad.** El SQL editor corre como
 `postgres` y bypassea la RLS — una función que devolviera datos de otros usuarios se vería igual de
@@ -157,12 +165,13 @@ transacción (media transferencia sería descuadre permanente):
 | `update_transfer(p_transfer_id, p_from_account_id, p_to_account_id, p_amount, p_date, p_description)` | Actualiza las dos filas; el trigger revierte/aplica saldos por `OLD`/`NEW.account_id` |
 | `delete_transfer(p_transfer_id)` | Borra las dos filas juntas |
 
-**Por qué las cinco agregaciones excluyen `transfer_id is not null`:** `get_movements_totals`,
-`get_expenses_by_movement_type`, `get_monthly_flow`, `get_budget_status` y `get_budget_history`
-filtran `m.transfer_id is null`. Una transferencia mueve plata entre cuentas propias pero no es
-ingreso ni gasto; sin el filtro inflaría ambos lados del período y consumiría tope de presupuesto.
-**Toda agregación nueva sobre `movements` tiene que llevar ese filtro**; olvidarla deja una
-inconsistencia silenciosa entre pantallas. `TopExpensesCard` no usa RPC y filtra en JS.
+**Por qué las seis agregaciones excluyen `transfer_id is not null`:** `get_movements_totals`,
+`get_expenses_by_movement_type`, `get_monthly_flow`, `get_daily_expenses_by_movement_type`,
+`get_budget_status` y `get_budget_history` filtran `m.transfer_id is null`. Una transferencia mueve
+plata entre cuentas propias pero no es ingreso ni gasto; sin el filtro inflaría ambos lados del
+período y consumiría tope de presupuesto. **Toda agregación nueva sobre `movements` tiene que
+llevar ese filtro**; olvidarla deja una inconsistencia silenciosa entre pantallas. `TopExpensesCard`
+no usa RPC y filtra en JS.
 
 Diagnóstico de pares desapareados (p. ej. tras borrar una cuenta que participó en transferencias,
 por el `ON DELETE CASCADE` de `movements.account_id`):
@@ -254,7 +263,7 @@ La columna es `timestamp without time zone` (antes `date`). Plan: `docs/plans/mo
   en el mes siguiente en el dashboard y los presupuestos. Contrapartida: las horas se muestran como
   hora paraguaya, no la del visitante.
 - **Todo fin de rango sobre `movements.date` es `< día + 1`, nunca `<=`.** `<= p_end_date` castea a
-  las 00:00 y pierde todo lo posterior del último día. Está aplicado en las tres RPC del dashboard,
+  las 00:00 y pierde todo lo posterior del último día. Está aplicado en las cuatro RPC del dashboard,
   y en `getMovements` con `nextDay()` (`lib/dashboard/date-range.ts`). El inicio (`>=`) no cambia.
   Los parámetros `p_start_date` / `p_end_date` siguen siendo `date`.
 - **Las filas previas al cambio de tipo están a las 00:00**, igual que las importadas de extractos

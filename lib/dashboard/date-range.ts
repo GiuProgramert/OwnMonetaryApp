@@ -61,3 +61,61 @@ export function resolveDateRange(params: {
 
   return getCurrentMonthRange();
 }
+
+export const MAX_DAILY_RANGE_DAYS = 92;
+
+/** Últimos `n` días en hora local, hoy incluido (`getLastNDaysRange(7)` termina hoy). */
+export function getLastNDaysRange(n: number): DateRange {
+  const now = new Date();
+  const end = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (n - 1));
+  return { startDate: toDateString(start), endDate: toDateString(end) };
+}
+
+/** Todos los días entre `startDate` y `endDate` (`yyyy-MM-dd`), ambos inclusive. */
+export function enumerateDays(startDate: string, endDate: string): string[] {
+  const days: string[] = [];
+  let day = startDate;
+  while (day <= endDate) {
+    days.push(day);
+    day = nextDay(day);
+  }
+  return days;
+}
+
+export type DailyExpensesPreset = "7d" | "30d" | "custom";
+
+function isValidDateString(value: string): boolean {
+  return /^\d{4}-\d{2}-\d{2}$/.test(value);
+}
+
+/**
+ * Resuelve el período propio del gráfico de gastos diarios (independiente del filtro de fechas
+ * global). Ausente o inválido ⇒ `30d`. `custom` exige fechas bien formadas, `startDate <= endDate`
+ * y no más de `MAX_DAILY_RANGE_DAYS` días — si no, también cae a `30d`.
+ */
+export function resolveDailyExpensesRange(params: {
+  dailyRange?: string;
+  dailyStart?: string;
+  dailyEnd?: string;
+}): { preset: DailyExpensesPreset; startDate: string; endDate: string } {
+  if (params.dailyRange === "7d") {
+    return { preset: "7d", ...getLastNDaysRange(7) };
+  }
+
+  if (params.dailyRange === "custom") {
+    const { dailyStart, dailyEnd } = params;
+    if (
+      dailyStart &&
+      dailyEnd &&
+      isValidDateString(dailyStart) &&
+      isValidDateString(dailyEnd) &&
+      dailyStart <= dailyEnd &&
+      enumerateDays(dailyStart, dailyEnd).length <= MAX_DAILY_RANGE_DAYS
+    ) {
+      return { preset: "custom", startDate: dailyStart, endDate: dailyEnd };
+    }
+  }
+
+  return { preset: "7d", ...getLastNDaysRange(30) };
+}
