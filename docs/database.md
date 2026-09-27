@@ -205,6 +205,45 @@ el nuevo, incluso moviendo plata entre dos presupuestos (cambia `movement_type_i
 (cambia `date`), y `bulkCreateMovements` (upsert de 200 filas) lo dispararía fila por fila. Cualquier
 agujero queda como descuadre permanente. **No agregar ese trigger para "completar" la feature.**
 
+## Deudas
+
+Servicios (sin fin definido) y pagos en cuotas, con recordatorio en el dashboard. Plan de origen:
+`docs/plans/debts-implementation.md`.
+
+- **`debts`** — la configuración: `kind` (`service`/`installments`), `amount_mode`
+  (`fixed`/`variable`), `amount`, `movement_type_id` (`ON DELETE RESTRICT`, como `movements`, no
+  `CASCADE` como `budgets`: borrar un tipo no puede llevarse puestas deudas), `first_due_date`
+  (el vencimiento de la primera cuota o período a pagar desde la app), `total_installments` /
+  `initial_paid_installments` (`null`/`0` en servicios; coherencia forzada por un `CHECK`) e
+  `is_finished` (manual).
+- **`movements.debt_id`** — `uuid` nullable, `ON DELETE SET NULL`: borrar una deuda no borra sus
+  movimientos (la plata salió de la cuenta de verdad; con `CASCADE` revertiría saldos). Un `CHECK`
+  (`movements_debt_or_transfer_check`) impide que una fila sea a la vez pago de deuda y mitad de una
+  transferencia.
+
+| Función | Devuelve | Uso |
+| --- | --- | --- |
+| `get_debts_status(p_debt_id)` | Una fila por deuda (todas, o solo `p_debt_id`): columnas de `debts` más `payments_count`, `paid_amount`, `paid_installments`, `remaining_installments`, `remaining_amount`, `finished` y `next_due_date`, calculados al leer | `lib/services/debts.ts` → `getDebts`, `getDebtById`, `getUpcomingDebts` |
+| `create_debt_payment(p_debt_id, p_account_id, p_amount, p_date, p_description)` | Inserta el movimiento `debit` (con el `movement_type_id` de la deuda) y devuelve su id | `lib/services/debts.client.ts` → `createDebtPayment` |
+
+Ambas son `security invoker` con `set search_path = ''`, como el resto de las RPC de este archivo.
+`get_debts_status` filtra `m.transfer_id is null` en el `left join lateral` que agrega
+`movements` — igual que las cinco agregaciones de [Transferencias](#transferencias-entre-cuentas).
+
+### Por qué el próximo vencimiento y "finalizada" se calculan y no se guardan
+
+Mismo problema que [el saldo](#3-el-saldo-es-incremental-no-calculado) y que los
+[presupuestos](#por-qué-no-hay-trigger-que-descuente-el-presupuesto): un valor guardado que un
+trigger ajuste al insertar/editar/borrar un pago queda descuadrado para siempre en cuanto alguien
+edita o borra ese movimiento por otro camino (`/protected/movements`). `get_debts_status` calcula
+`next_due_date` como `first_due_date + (payments_count) meses` y `finished` como `is_finished OR
+paid_installments >= total_installments`, siempre a partir de los movimientos reales.
+
+⚠️ **`next_due_date` se calcula siempre desde `first_due_date`, nunca encadenando mes a mes.**
+Postgres recorta el 31 de enero + 1 mes al 28 de febrero, pero 31 de enero + 2 meses da 31 de marzo.
+Encadenar (sumar un mes al resultado anterior) dejaría el día en 28 para siempre a partir de la
+primera vez que el mes recorta.
+
 ## `movements.date`: fecha y hora
 
 La columna es `timestamp without time zone` (antes `date`). Plan: `docs/plans/movements-date-timestamp-implementation.md`.
@@ -295,6 +334,7 @@ parecen:
 | `movement_types` | Ninguna | Tabla compartida/global, sin dueño; escritura restringida por UUID literal (regla 4) |
 | `budgets` | Directa | `user_id = (select auth.uid())`. `movement_types` no tiene dueño, así que el presupuesto no puede heredarlo del tipo |
 | `budget_periods` | **Indirecta** | No tiene `user_id`. `EXISTS` contra `budgets` vía `budget_id`, el mismo modelo que `movements` contra `accounts` |
+| `debts` | Directa | `user_id = (select auth.uid())` |
 
 Que `movements` no tenga `user_id` es lo que obliga a que todas sus políticas lleven la subconsulta.
 Una política de `movements` que solo referencie columnas de `movements` **no está scopeando por

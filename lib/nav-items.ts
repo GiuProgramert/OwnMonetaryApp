@@ -1,5 +1,6 @@
 import {
   Activity,
+  HandCoins,
   Home,
   Shapes,
   Target,
@@ -13,6 +14,8 @@ export interface NavItem {
   shortLabel: string;
   href: string;
   icon: LucideIcon;
+  /** `true` = ítem fijo en la barra inferior de móvil; `false` = va al menú "Más". */
+  mobilePinned: boolean;
 }
 
 export const navItems: NavItem[] = [
@@ -21,30 +24,42 @@ export const navItems: NavItem[] = [
     shortLabel: "Inicio",
     href: "/protected",
     icon: Home,
+    mobilePinned: true,
   },
   {
     label: "Cuentas",
     shortLabel: "Cuentas",
     href: "/protected/accounts",
     icon: User,
+    mobilePinned: true,
   },
   {
     label: "Movimientos",
     shortLabel: "Movs.",
     href: "/protected/movements",
     icon: Activity,
+    mobilePinned: true,
   },
   {
     label: "Tipos de movimientos",
     shortLabel: "Tipos",
     href: "/protected/movement-types",
     icon: Shapes,
+    mobilePinned: false,
   },
   {
     label: "Presupuestos",
     shortLabel: "Topes",
     href: "/protected/budgets",
     icon: Target,
+    mobilePinned: true,
+  },
+  {
+    label: "Deudas",
+    shortLabel: "Deudas",
+    href: "/protected/debts",
+    icon: HandCoins,
+    mobilePinned: false,
   },
 ];
 

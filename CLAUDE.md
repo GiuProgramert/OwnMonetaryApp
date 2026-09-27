@@ -116,6 +116,34 @@ transferencia. Estructura: `lib/schemas/transfers.ts`, `lib/services/transfers{,
 el dueño (UUID literal en la política), y el tipo `Transferencia` (`transferMovementTypeId`) no se
 ofrece en selects ni se edita/borra.
 
+### Debts (`app/protected/debts`)
+
+Servicios (sin fin definido) y pagos en cuotas: cada pago es un movimiento `debit` normal vinculado
+por `movements.debt_id` (`ON DELETE SET NULL`, así que borrar una deuda no borra sus movimientos).
+Estructura: `lib/schemas/debts.ts`, `lib/services/debts.ts` (server) / `debts.client.ts`
+(mutaciones), `lib/debts/due.ts` (helpers de vencimiento en hora local), `components/debts/`,
+`app/protected/debts/**` (incluye `[id]` = detalle y `[id]/pay` = alta de pago). Tabla `debts` más
+las RPC `get_debts_status` y `create_debt_payment`; ver
+[`docs/database.md`](docs/database.md#deudas). Plan de origen:
+`docs/plans/debts-implementation.md`.
+
+**Tres reglas:** (1) los pagos se crean solo por `create_debt_payment` (RPC `security invoker` que
+valida deuda y cuenta, y copia el `movement_type_id` de la deuda); nunca insertar directo en
+`movements` con `debt_id`. (2) Monto pagado, cuotas pagadas y próximo vencimiento se calculan al
+leer en `get_debts_status`, nunca se guardan ni se escriben desde la app (mismo problema que
+`accounts.current_balance` y los presupuestos). (3) **No agregar `debt_id` a `movementSchema`**:
+como `updateMovement` hace `.update(parsed.data)`, un `debt_id` con default `null` en el schema
+desvincularía en silencio el pago al editarlo desde `/protected/movements`.
+
+`components/mobile-nav.tsx` usa `NavItem.mobilePinned` para elegir los 4 ítems fijos de la barra
+inferior flotante; el resto (hoy: Tipos de movimientos y Deudas) va al botón "Menú", un
+`DropdownMenu` con una grilla de 3 columnas.
+
+Pagar y editar una deuda se abren desde el listado, el detalle o el dashboard: los links pasan
+`?returnTo=` (`withReturnTo` / `resolveReturnTo` en `lib/return-to.ts`, que solo acepta rutas de
+`/protected`) y la page lo usa para la flecha "<" y para el redirect después de guardar. Sin el
+parámetro, vuelven al detalle.
+
 ### Fecha y hora de movimientos
 
 `movements.date` es `timestamp` (hora local de Paraguay, sin zona). Tres reglas: (1) todo fin de

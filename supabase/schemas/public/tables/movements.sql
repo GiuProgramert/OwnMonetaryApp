@@ -10,8 +10,11 @@ CREATE TABLE "public"."movements" (
   "updated_at"       timestamp with time zone    DEFAULT now(),
   "external_id"      text,
   "transfer_id"      uuid,
+  "debt_id"          uuid,
   CONSTRAINT "movements_account_id_fkey" FOREIGN KEY (account_id) REFERENCES public.accounts(id) ON DELETE CASCADE,
   CONSTRAINT "movements_amount_check" CHECK ((amount > (0)::numeric)),
+  CONSTRAINT "movements_debt_id_fkey" FOREIGN KEY (debt_id) REFERENCES public.debts(id) ON DELETE SET NULL,
+  CONSTRAINT "movements_debt_or_transfer_check" CHECK (((debt_id IS NULL) OR (transfer_id IS NULL))),
   CONSTRAINT "movements_movement_type_id_fkey" FOREIGN KEY (movement_type_id) REFERENCES public.movement_types(id) ON DELETE RESTRICT,
   CONSTRAINT "movements_pkey" PRIMARY KEY (id),
   CONSTRAINT "movements_type_check" CHECK (((type)::text = ANY ((ARRAY['credit'::character varying, 'debit'::character varying])::text[])))
@@ -23,6 +26,8 @@ ALTER TABLE "public"."movements"
 CREATE INDEX idx_movements_account ON public.movements USING btree (account_id);
 
 CREATE INDEX idx_movements_date ON public.movements USING btree (date);
+
+CREATE INDEX idx_movements_debt ON public.movements USING btree (debt_id);
 
 CREATE INDEX idx_movements_transfer ON public.movements USING btree (transfer_id);
 

@@ -120,6 +120,62 @@ export type Database = {
           },
         ]
       }
+      debts: {
+        Row: {
+          amount: number
+          amount_mode: string
+          created_at: string | null
+          first_due_date: string
+          id: string
+          initial_paid_installments: number
+          is_finished: boolean
+          kind: string
+          movement_type_id: string
+          name: string
+          total_installments: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          amount_mode: string
+          created_at?: string | null
+          first_due_date: string
+          id?: string
+          initial_paid_installments?: number
+          is_finished?: boolean
+          kind: string
+          movement_type_id: string
+          name: string
+          total_installments?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Update: {
+          amount?: number
+          amount_mode?: string
+          created_at?: string | null
+          first_due_date?: string
+          id?: string
+          initial_paid_installments?: number
+          is_finished?: boolean
+          kind?: string
+          movement_type_id?: string
+          name?: string
+          total_installments?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "debts_movement_type_id_fkey"
+            columns: ["movement_type_id"]
+            isOneToOne: false
+            referencedRelation: "movement_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       movement_types: {
         Row: {
           color: string
@@ -153,6 +209,7 @@ export type Database = {
           amount: number
           created_at: string | null
           date: string
+          debt_id: string | null
           description: string
           external_id: string | null
           id: string
@@ -166,6 +223,7 @@ export type Database = {
           amount: number
           created_at?: string | null
           date?: string
+          debt_id?: string | null
           description: string
           external_id?: string | null
           id?: string
@@ -179,6 +237,7 @@ export type Database = {
           amount?: number
           created_at?: string | null
           date?: string
+          debt_id?: string | null
           description?: string
           external_id?: string | null
           id?: string
@@ -196,6 +255,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "movements_debt_id_fkey"
+            columns: ["debt_id"]
+            isOneToOne: false
+            referencedRelation: "debts"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "movements_movement_type_id_fkey"
             columns: ["movement_type_id"]
             isOneToOne: false
@@ -209,6 +275,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_debt_payment: {
+        Args: {
+          p_account_id: string
+          p_amount: number
+          p_date: string
+          p_debt_id: string
+          p_description: string
+        }
+        Returns: string
+      }
       create_transfer: {
         Args: {
           p_amount: number
@@ -239,6 +315,33 @@ export type Database = {
           movement_type_id: string
           name: string
           spent: number
+        }[]
+      }
+      get_debts_status: {
+        Args: { p_debt_id?: string }
+        Returns: {
+          amount: number
+          amount_mode: string
+          created_at: string
+          finished: boolean
+          first_due_date: string
+          id: string
+          initial_paid_installments: number
+          is_finished: boolean
+          kind: string
+          movement_type_color: string
+          movement_type_id: string
+          movement_type_name: string
+          name: string
+          next_due_date: string
+          paid_amount: number
+          paid_installments: number
+          payments_count: number
+          remaining_amount: number
+          remaining_installments: number
+          total_installments: number
+          updated_at: string
+          user_id: string
         }[]
       }
       get_expenses_by_movement_type: {

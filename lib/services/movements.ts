@@ -14,10 +14,12 @@ const MOVEMENT_COLUMNS = `
   account_id,
   movement_type_id,
   transfer_id,
+  debt_id,
   created_at,
   updated_at,
   accounts!inner(name,color,user_id),
-  movement_types!inner(name,color)
+  movement_types!inner(name,color),
+  debts(id,name)
 `;
 
 export default async function getMovements(
@@ -165,4 +167,28 @@ export async function getMovementById(id: string) {
   }
 
   return data as unknown as Movement;
+}
+
+/** Todos los pagos de una deuda, sin paginación (ver plan de deudas). */
+export async function getMovementsByDebt(debtId: string) {
+  const supabase = await createClient();
+  const user = await supabase.auth.getUser();
+
+  if (!user.data.user) {
+    throw new Error("User not authenticated");
+  }
+
+  const { data, error } = await supabase
+    .from("movements")
+    .select(MOVEMENT_COLUMNS)
+    .eq("debt_id", debtId)
+    .eq("accounts.user_id", user.data.user.id)
+    .order("date", { ascending: false })
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data as unknown as Movement[];
 }

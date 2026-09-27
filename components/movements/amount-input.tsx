@@ -7,9 +7,10 @@ interface Props {
   id?: string;
   value: number | undefined;
   onChange: (value: number) => void;
+  disabled?: boolean;
 }
 
-export default function AmountInput({ id, value, onChange }: Props) {
+export default function AmountInput({ id, value, onChange, disabled }: Props) {
   const [display, setDisplay] = useState(
     value ? value.toLocaleString("es-PY") : ""
   );
@@ -32,6 +33,7 @@ export default function AmountInput({ id, value, onChange }: Props) {
       inputMode="numeric"
       value={display}
       onChange={handleChange}
+      disabled={disabled}
     />
   );
 }

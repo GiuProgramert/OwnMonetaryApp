@@ -84,7 +84,7 @@ function NatureBadge({ movement }: { movement: Movement }) {
   );
 }
 
-function ColoredLabel({
+export function ColoredLabel({
   color,
   name,
   className,
@@ -208,7 +208,19 @@ export default async function MovementsTable({
                       />
                     </TableCell>
                     <TableCell>
-                      <NatureBadge movement={movement} />
+                      <div className="flex flex-col gap-1">
+                        <NatureBadge movement={movement} />
+                        {movement.debts && (
+                          <Link href={`/protected/debts/${movement.debts.id}`}>
+                            <Badge
+                              variant="outline"
+                              className="max-w-40 truncate"
+                            >
+                              Deuda: {movement.debts.name}
+                            </Badge>
+                          </Link>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-2">
@@ -266,6 +278,21 @@ export default async function MovementsTable({
                         <NatureBadge movement={movement} />
                       ),
                     },
+                    ...(movement.debts
+                      ? [
+                          {
+                            label: "Deuda",
+                            value: (
+                              <Link
+                                className="underline"
+                                href={`/protected/debts/${movement.debts.id}`}
+                              >
+                                {movement.debts.name}
+                              </Link>
+                            ),
+                          },
+                        ]
+                      : []),
                   ]}
                 />
               </li>

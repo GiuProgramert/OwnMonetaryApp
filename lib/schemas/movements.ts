@@ -60,8 +60,10 @@ export type Movement = {
   account_id: string;
   movement_type_id: string;
   transfer_id: string | null;
+  debt_id: string | null;
   created_at: string;
   updated_at: string;
   accounts: Pick<Account, "name" | "color" | "user_id">;
   movement_types: Pick<MovementType, "name" | "color">;
+  debts: { id: string; name: string } | null;
 };
