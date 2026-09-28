@@ -48,9 +48,14 @@ export type DailyExpensesSeries = {
   total: number;
 };
 
+/**
+ * Un día del gráfico: `total` es el gasto del día y cada `[seriesId]` (id del tipo u `"otros"`)
+ * el segmento de ese tipo en la barra apilada.
+ */
 export type DailyExpensesPoint = {
   day: string;
   dayLabel: string;
+  total: number;
   [seriesId: string]: string | number;
 };
 

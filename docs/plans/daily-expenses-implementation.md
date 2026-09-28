@@ -398,3 +398,23 @@ El usuario revisó los puntos propuestos y no eliminó ninguno. Esto quedó afue
   build y el lint no prueban esto — son correctitud de tipos, no de producto.
 - Que el total del período coincida entre `DailyExpensesCard` y `ExpensesByTypeCard` con el mismo
   rango (parte de 5.2, requiere la app corriendo con datos reales).
+
+## Actualización 2026-09-28: barras apiladas
+
+El gráfico de líneas se reemplazó por barras apiladas por día (un segmento por tipo, total del día
+encima, tooltip por segmento con el total del día, leyenda con cuadrados). La RPC no cambió.
+Además:
+
+- El rango efectivo se corta en hoy (`resolveDailyExpensesRange` devuelve `endDate` ≤ hoy y
+  `requestedEndDate` para los inputs); un rango íntegramente futuro muestra un mensaje en vez del
+  gráfico.
+- "Hoy" sale de `todayInAppTimeZone()` (`America/Asuncion`), no de la zona del proceso Node.
+- El fallback de `resolveDailyExpensesRange` devolvía `preset: "7d"` con 30 días: sin
+  `?dailyRange`, el botón "7 días" quedaba marcado mostrando un mes. Ahora devuelve `"30d"`.
+- Series cortadas en el gráfico de líneas: los datos traían el 0 en todos los días; el corte venía
+  de la animación de `<Line>` de Recharts, que dibuja el trazo con un `stroke-dasharray` calculado
+  con el largo del path del render anterior. Las barras corren con `isAnimationActive={false}`.
+- Default del card: 7 días (antes 30). "Personalizado" ya no navega al elegirse ni en cada cambio
+  de Desde/Hasta: los inputs son un borrador local y se aplican con el botón "Aplicar". Todas las
+  navegaciones del filtro usan `router.push(..., { scroll: false })`, porque la página subía al
+  tope en cada cambio.

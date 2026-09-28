@@ -71,10 +71,17 @@ state.
 
 The daily-expenses card (`components/dashboard/daily-expenses-card.tsx`) has **its own period,
 independent of the page's `startDate`/`endDate` filter** — it reads `dailyRange` (`7d` | `30d` |
-`custom`, default `30d`), `dailyStart`/`dailyEnd` (only with `dailyRange=custom`, capped at 92 days)
+`custom`, default `7d`), `dailyStart`/`dailyEnd` (only with `dailyRange=custom`, capped at 92 days)
 and `dailyTypes` (`all` to disable the top-8-plus-"Otros" grouping) from the URL, resolved server-side
 by `resolveDailyExpensesRange` (`lib/dashboard/date-range.ts`). It still follows the page's account
-filter (`accountFilter.accountId`).
+filter (`accountFilter.accountId`). It's a stacked bar chart (one bar per day, one segment per type,
+day total on top); the effective range is **cut at today** (`endDate`, never future days) while
+`requestedEndDate` keeps the user's "Hasta" for the inputs. "Today" comes from
+`todayInAppTimeZone()` (`America/Asuncion`), not from the Node process's timezone. Bars run with
+`isAnimationActive={false}`: Recharts' animation measures with the previous render and can leave
+the chart half-drawn after a `router.push` (that's what clipped the old line chart). The custom range
+only navigates on "Aplicar" (the Desde/Hasta inputs are a local draft), and every filter
+navigation uses `router.push(..., { scroll: false })` so the page doesn't jump to the top.
 
 ### Filtro de cuenta y cuenta principal
 

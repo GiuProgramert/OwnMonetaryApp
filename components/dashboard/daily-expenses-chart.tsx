@@ -1,104 +1,171 @@
 "use client";
 
-import type { ComponentProps } from "react";
-import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-  ChartLegend,
-  ChartLegendContent,
-  ChartConfig,
-} from "@/components/ui/chart";
+import { Bar, BarChart, CartesianGrid, LabelList, XAxis, YAxis } from "recharts";
+import type { LabelProps, TooltipContentProps, TooltipValueType } from "recharts";
+import { ChartContainer, ChartTooltip, ChartConfig } from "@/components/ui/chart";
 import { DailyExpensesSeries, DailyExpensesPoint } from "@/lib/schemas/dashboard";
 import { formatCurrency, formatCompactAmount } from "@/lib/dashboard/format";
+import { useIsMobile } from "@/lib/hooks/use-media-query";
 
 interface Props {
+  /** En orden de apilado: la primera va abajo ("Otros", si está, siempre última). */
   series: DailyExpensesSeries[];
   points: DailyExpensesPoint[];
 }
 
+const STACK_ID = "day";
+
 export default function DailyExpensesChart({ series, points }: Props) {
+  const isMobile = useIsMobile();
+
   const chartConfig: ChartConfig = Object.fromEntries(
     series.map((s) => [s.id, { label: s.name, color: s.color }])
   );
 
-  const showDots = points.length <= 14;
+  // Con barras angostas el total horizontal se pisa con el del día de al lado.
+  const rotateTotals = points.length > (isMobile ? 10 : 31);
+
+  // El total del día se dibuja sobre el segmento más alto con gasto, no sobre la última serie:
+  // si ese tipo no gastó ese día, su segmento mide 0 y la etiqueta quedaría sin ancla fiable.
+  const topSeriesByDay = points.map((point) => {
+    for (let i = series.length - 1; i >= 0; i--) {
+      if (Number(point[series[i].id]) > 0) {
+        return series[i].id;
+      }
+    }
+    return undefined;
+  });
 
   return (
-    <ChartContainer config={chartConfig} className="w-full aspect-[4/3] sm:aspect-video">
-      <LineChart data={points} margin={{ left: 8, right: 8 }}>
-        <CartesianGrid vertical={false} />
-        <XAxis
-          dataKey="dayLabel"
-          tickLine={false}
-          axisLine={false}
-          minTickGap={16}
-          interval="preserveStartEnd"
-        />
-        <YAxis tickFormatter={formatCompactAmount} tickLine={false} axisLine={false} />
-        <ChartTooltip content={<DailyExpensesTooltip />} />
-        <ChartLegend content={<ChartLegendContent />} />
-        {series.map((s) => (
-          <Line
-            key={s.id}
-            dataKey={s.id}
-            name={s.name}
-            stroke={s.color}
-            strokeWidth={2}
-            type="monotone"
-            dot={showDots}
+    <div className="grid gap-3">
+      <ChartContainer config={chartConfig} className="w-full aspect-[4/3] sm:aspect-video">
+        <BarChart
+          data={points}
+          margin={{ top: rotateTotals ? 44 : 20, left: 8, right: 8 }}
+          barCategoryGap="15%"
+        >
+          <CartesianGrid vertical={false} />
+          <XAxis
+            dataKey="dayLabel"
+            tickLine={false}
+            axisLine={false}
+            minTickGap={16}
+            interval="preserveStartEnd"
           />
+          <YAxis tickFormatter={formatCompactAmount} tickLine={false} axisLine={false} />
+          <ChartTooltip
+            shared={false}
+            cursor={false}
+            content={(props) => <DailyExpensesTooltip {...props} series={series} />}
+          />
+          {series.map((s) => (
+            <Bar
+              key={s.id}
+              dataKey={s.id}
+              name={s.name}
+              stackId={STACK_ID}
+              fill={s.color}
+              maxBarSize={48}
+              // Sin animación: la animación de Recharts mide el largo/alto con el render anterior
+              // y al cambiar de rango por `router.push` puede quedar a medias (así se cortaban las
+              // líneas del gráfico anterior).
+              isAnimationActive={false}
+            >
+              <LabelList
+                dataKey="total"
+                content={(labelProps) => (
+                  <DayTotalLabel
+                    {...labelProps}
+                    show={topSeriesByDay[Number(labelProps.index)] === s.id}
+                    vertical={rotateTotals}
+                  />
+                )}
+              />
+            </Bar>
+          ))}
+        </BarChart>
+      </ChartContainer>
+
+      <ul className="flex flex-wrap justify-center gap-x-4 gap-y-1.5 text-xs">
+        {series.map((s) => (
+          <li key={s.id} className="flex items-center gap-1.5">
+            <span
+              className="h-2.5 w-2.5 shrink-0 rounded-[2px]"
+              style={{ backgroundColor: s.color }}
+            />
+            <span className="text-muted-foreground">{s.name}</span>
+          </li>
         ))}
-      </LineChart>
-    </ChartContainer>
+      </ul>
+    </div>
   );
 }
 
-type DailyExpensesTooltipProps = ComponentProps<typeof ChartTooltipContent>;
+function DayTotalLabel({
+  x,
+  y,
+  width,
+  value,
+  show,
+  vertical,
+}: LabelProps & { show: boolean; vertical: boolean }) {
+  const total = Number(value);
 
-/**
- * Tooltip propio: filtra los tipos en 0 ese día y ordena por monto (mayor primero), porque
- * `ChartTooltipContent` con `formatter` reemplaza la fila entera y con 8+ líneas sería una lista
- * de ceros sin orden (ver plan, restricción 9 y punto 3.4).
- */
-function DailyExpensesTooltip(props: DailyExpensesTooltipProps) {
-  const { active, payload, label } = props;
-
-  if (!active || !payload?.length) {
+  if (!show || !total) {
     return null;
   }
 
-  const filtered = payload
-    .filter((item) => Number(item.value) !== 0)
-    .sort((a, b) => Number(b.value) - Number(a.value));
-
-  if (filtered.length === 0) {
-    return null;
-  }
-
-  const dayLabel = typeof label === "string" ? formatFullDate(filtered[0].payload?.day ?? label) : "";
+  const cx = Number(x) + Number(width) / 2;
+  const top = Number(y) - 4;
 
   return (
-    <ChartTooltipContent
-      {...props}
-      payload={filtered}
-      labelFormatter={() => dayLabel}
-      formatter={(value, name, item) => (
-        <>
-          <div
-            className="h-2.5 w-2.5 shrink-0 rounded-[2px]"
-            style={{ backgroundColor: item.color }}
-          />
-          <div className="flex flex-1 justify-between leading-none items-center">
-            <span className="text-muted-foreground">{name}</span>
-            <span className="ml-2 font-mono font-medium text-foreground tabular-nums">
-              {formatCurrency(Number(value))}
-            </span>
-          </div>
-        </>
-      )}
-    />
+    <text
+      x={cx}
+      y={top}
+      textAnchor={vertical ? "start" : "middle"}
+      dominantBaseline={vertical ? "central" : "auto"}
+      transform={vertical ? `rotate(-90, ${cx}, ${top})` : undefined}
+      className="fill-foreground text-[10px] sm:text-xs"
+    >
+      {formatCompactAmount(total)}
+    </text>
+  );
+}
+
+type DailyExpensesTooltipProps = TooltipContentProps<TooltipValueType, string | number> & {
+  series: DailyExpensesSeries[];
+};
+
+/**
+ * Tooltip de un segmento (`shared={false}`): el tipo, su monto ese día y el total del día.
+ */
+function DailyExpensesTooltip({ active, payload, series }: DailyExpensesTooltipProps) {
+  const item = payload?.[0];
+
+  if (!active || !item || !Number(item.value)) {
+    return null;
+  }
+
+  const point = item.payload as DailyExpensesPoint;
+  const color = series.find((s) => s.id === item.dataKey)?.color ?? item.color;
+
+  return (
+    <div className="grid min-w-[10rem] gap-1.5 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl">
+      <div className="font-medium">{formatFullDate(point.day)}</div>
+      <div className="flex items-center gap-2">
+        <div className="h-2.5 w-2.5 shrink-0 rounded-[2px]" style={{ backgroundColor: color }} />
+        <span className="flex-1 text-muted-foreground">{item.name}</span>
+        <span className="font-mono font-medium tabular-nums text-foreground">
+          {formatCurrency(Number(item.value))}
+        </span>
+      </div>
+      <div className="flex items-center justify-between gap-2 border-t border-border/50 pt-1.5">
+        <span className="text-muted-foreground">Total del día</span>
+        <span className="font-mono font-medium tabular-nums text-foreground">
+          {formatCurrency(point.total)}
+        </span>
+      </div>
+    </div>
   );
 }
 

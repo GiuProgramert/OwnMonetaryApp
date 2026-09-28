@@ -116,7 +116,11 @@ export default async function ProtectedPage({
       </Suspense>
 
       <Suspense fallback={<ChartCardSkeleton />}>
-        <DailyExpensesCard filter={dailyExpensesFilter} preset={dailyRange.preset} />
+        <DailyExpensesCard
+          filter={dailyExpensesFilter}
+          preset={dailyRange.preset}
+          requestedEndDate={dailyRange.requestedEndDate}
+        />
       </Suspense>
 
       <Suspense fallback={<ChartCardSkeleton />}>

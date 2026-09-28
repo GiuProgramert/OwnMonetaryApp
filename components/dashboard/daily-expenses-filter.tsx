@@ -32,6 +32,15 @@ export default function DailyExpensesFilter({
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
+  // "Personalizado" solo muestra los inputs; se navega recién con "Aplicar". Se resetea cuando
+  // cambia el preset aplicado (por ejemplo, al volver atrás con el navegador).
+  const [showCustom, setShowCustom] = useState(preset === "custom");
+  const [prevPreset, setPrevPreset] = useState(preset);
+  if (preset !== prevPreset) {
+    setPrevPreset(preset);
+    setShowCustom(preset === "custom");
+  }
+
   const setParams = (updates: Record<string, string | undefined>) => {
     const params = new URLSearchParams(searchParams.toString());
 
@@ -43,15 +52,13 @@ export default function DailyExpensesFilter({
       }
     }
 
-    router.push(`${pathname}?${params.toString()}`);
+    // `scroll: false`: el card está abajo en el dashboard y `router.push` sube al tope por defecto.
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
   const selectPreset = (value: "7d" | "30d") => {
+    setShowCustom(false);
     setParams({ dailyRange: value, dailyStart: undefined, dailyEnd: undefined });
-  };
-
-  const selectCustom = () => {
-    setParams({ dailyRange: "custom", dailyStart: startDate, dailyEnd: endDate });
   };
 
   const applyCustomRange = (nextStart: string, nextEnd: string) => {
@@ -66,7 +73,7 @@ export default function DailyExpensesFilter({
         <Button
           type="button"
           size="sm"
-          variant={preset === "7d" ? "default" : "outline"}
+          variant={!showCustom && preset === "7d" ? "default" : "outline"}
           onClick={() => selectPreset("7d")}
         >
           7 días
@@ -74,7 +81,7 @@ export default function DailyExpensesFilter({
         <Button
           type="button"
           size="sm"
-          variant={preset === "30d" ? "default" : "outline"}
+          variant={!showCustom && preset === "30d" ? "default" : "outline"}
           onClick={() => selectPreset("30d")}
         >
           1 mes
@@ -82,18 +89,19 @@ export default function DailyExpensesFilter({
         <Button
           type="button"
           size="sm"
-          variant={preset === "custom" ? "default" : "outline"}
-          onClick={selectCustom}
+          variant={showCustom ? "default" : "outline"}
+          onClick={() => setShowCustom(true)}
         >
           Personalizado
         </Button>
       </div>
 
-      {preset === "custom" && (
+      {showCustom && (
         <CustomRangeInputs
           key={`${startDate}-${endDate}`}
           startDate={startDate}
           endDate={endDate}
+          isApplied={preset === "custom"}
           onApply={applyCustomRange}
         />
       )}
@@ -117,49 +125,47 @@ export default function DailyExpensesFilter({
 }
 
 /**
- * El estado local (borrador) solo se envía a la URL si el rango es válido. Se remonta con
+ * Borrador local del rango: se envía a la URL solo con "Aplicar" y si es válido. Se remonta con
  * `key={`${startDate}-${endDate}`}` desde el padre para resetearse cuando cambian las props
  * (por ejemplo, al volver atrás con el navegador), sin `useEffect`.
  */
 function CustomRangeInputs({
   startDate,
   endDate,
+  isApplied,
   onApply,
 }: {
   startDate: string;
   endDate: string;
+  /** El rango de las props ya es el personalizado aplicado (no el de un preset). */
+  isApplied: boolean;
   onApply: (startDate: string, endDate: string) => void;
 }) {
   const [draftStart, setDraftStart] = useState(startDate);
   const [draftEnd, setDraftEnd] = useState(endDate);
   const [error, setError] = useState<string | undefined>(undefined);
 
-  const applyIfValid = (nextStart: string, nextEnd: string) => {
-    setDraftStart(nextStart);
-    setDraftEnd(nextEnd);
+  const isUnchanged = isApplied && draftStart === startDate && draftEnd === endDate;
+  const canApply = Boolean(draftStart && draftEnd) && !isUnchanged;
 
-    if (!nextStart || !nextEnd) {
-      setError(undefined);
-      return;
-    }
-
-    if (nextStart > nextEnd) {
+  const apply = () => {
+    if (draftStart > draftEnd) {
       setError("La fecha inicial es posterior a la final");
       return;
     }
 
-    if (enumerateDays(nextStart, nextEnd).length > MAX_DAILY_RANGE_DAYS) {
+    if (enumerateDays(draftStart, draftEnd).length > MAX_DAILY_RANGE_DAYS) {
       setError("El rango máximo es de 92 días");
       return;
     }
 
     setError(undefined);
-    onApply(nextStart, nextEnd);
+    onApply(draftStart, draftEnd);
   };
 
   return (
     <div className="grid gap-2">
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:max-w-md">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_1fr_auto] sm:items-end sm:max-w-lg">
         <div className="grid min-w-0 gap-1">
           <Label htmlFor="dailyStart" className="text-xs text-muted-foreground">
             Desde
@@ -168,7 +174,10 @@ function CustomRangeInputs({
             id="dailyStart"
             type="date"
             value={draftStart}
-            onChange={(e) => applyIfValid(e.target.value, draftEnd)}
+            onChange={(e) => {
+              setDraftStart(e.target.value);
+              setError(undefined);
+            }}
           />
         </div>
         <div className="grid min-w-0 gap-1">
@@ -179,9 +188,15 @@ function CustomRangeInputs({
             id="dailyEnd"
             type="date"
             value={draftEnd}
-            onChange={(e) => applyIfValid(draftStart, e.target.value)}
+            onChange={(e) => {
+              setDraftEnd(e.target.value);
+              setError(undefined);
+            }}
           />
         </div>
+        <Button type="button" disabled={!canApply} onClick={apply}>
+          Aplicar
+        </Button>
       </div>
       {error && <p className="text-sm text-destructive">{error}</p>}
     </div>

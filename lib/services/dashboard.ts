@@ -133,6 +133,12 @@ export async function getDailyExpensesByMovementType(
     throw new Error("User not authenticated");
   }
 
+  // Rango íntegramente futuro: `resolveDailyExpensesRange` cortó `endDate` en hoy y quedó antes
+  // de `startDate`.
+  if (filter.endDate < filter.startDate) {
+    return { series: [], points: [], groupedCount: 0 };
+  }
+
   const { data, error } = await supabase.rpc("get_daily_expenses_by_movement_type", {
     p_account_id: filter.accountId ?? undefined,
     p_start_date: filter.startDate,
@@ -186,13 +192,18 @@ export async function getDailyExpensesByMovementType(
     series.push({ id: "otros", name: "Otros", color: OTROS_COLOR, total: otrosTotal });
   }
 
+  // `total` suma los montos ya agregados por la RPC (a lo sumo 9 por día), no filas crudas.
   const points: DailyExpensesPoint[] = days.map((day) => {
-    const point: DailyExpensesPoint = { day, dayLabel: toDayLabel(day) };
+    const point: DailyExpensesPoint = { day, dayLabel: toDayLabel(day), total: 0 };
     for (const { id, byDay } of keptAmountsByDay) {
-      point[id] = byDay.get(day) ?? 0;
+      const amount = byDay.get(day) ?? 0;
+      point[id] = amount;
+      point.total += amount;
     }
     if (otrosByDay) {
-      point.otros = otrosByDay.get(day) ?? 0;
+      const amount = otrosByDay.get(day) ?? 0;
+      point.otros = amount;
+      point.total += amount;
     }
     return point;
   });

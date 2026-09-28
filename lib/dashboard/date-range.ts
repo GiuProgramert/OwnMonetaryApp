@@ -64,12 +64,34 @@ export function resolveDateRange(params: {
 
 export const MAX_DAILY_RANGE_DAYS = 92;
 
-/** Últimos `n` días en hora local, hoy incluido (`getLastNDaysRange(7)` termina hoy). */
+/**
+ * Zona de la app. `movements.date` guarda hora de Paraguay sin zona, así que "hoy" tiene que
+ * salir de esta zona y no de la del proceso Node (en un deploy en UTC, entre las 21:00 y las 24:00
+ * `new Date()` ya es mañana).
+ */
+export const APP_TIME_ZONE = "America/Asuncion";
+
+/** Hoy (`yyyy-MM-dd`) en `APP_TIME_ZONE`, sin importar la zona del runtime. */
+export function todayInAppTimeZone(): string {
+  // `en-CA` formatea como `yyyy-MM-dd`.
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: APP_TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+}
+
+/** `date` (`yyyy-MM-dd`) más `days` días; aritmética de calendario, sin zona horaria. */
+export function addDays(date: string, days: number): string {
+  const [year, month, day] = date.split("-").map(Number);
+  return toDateString(new Date(year, month - 1, day + days));
+}
+
+/** Últimos `n` días, hoy incluido (`getLastNDaysRange(7)` termina hoy, en `APP_TIME_ZONE`). */
 export function getLastNDaysRange(n: number): DateRange {
-  const now = new Date();
-  const end = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (n - 1));
-  return { startDate: toDateString(start), endDate: toDateString(end) };
+  const today = todayInAppTimeZone();
+  return { startDate: addDays(today, -(n - 1)), endDate: today };
 }
 
 /** Todos los días entre `startDate` y `endDate` (`yyyy-MM-dd`), ambos inclusive. */
@@ -91,17 +113,24 @@ function isValidDateString(value: string): boolean {
 
 /**
  * Resuelve el período propio del gráfico de gastos diarios (independiente del filtro de fechas
- * global). Ausente o inválido ⇒ `30d`. `custom` exige fechas bien formadas, `startDate <= endDate`
- * y no más de `MAX_DAILY_RANGE_DAYS` días — si no, también cae a `30d`.
+ * global). Ausente o inválido ⇒ `7d`. `custom` exige fechas bien formadas, `startDate <= endDate`
+ * y no más de `MAX_DAILY_RANGE_DAYS` días — si no, también cae a `7d`.
+ *
+ * `endDate` es el rango efectivo, cortado en hoy: el gráfico nunca muestra días futuros.
+ * `requestedEndDate` es el "Hasta" que eligió el usuario, para los inputs del filtro. Si el rango
+ * es íntegramente futuro, `endDate < startDate` (rango vacío).
  */
 export function resolveDailyExpensesRange(params: {
   dailyRange?: string;
   dailyStart?: string;
   dailyEnd?: string;
-}): { preset: DailyExpensesPreset; startDate: string; endDate: string } {
-  if (params.dailyRange === "7d") {
-    return { preset: "7d", ...getLastNDaysRange(7) };
-  }
+}): {
+  preset: DailyExpensesPreset;
+  startDate: string;
+  endDate: string;
+  requestedEndDate: string;
+} {
+  const today = todayInAppTimeZone();
 
   if (params.dailyRange === "custom") {
     const { dailyStart, dailyEnd } = params;
@@ -113,9 +142,20 @@ export function resolveDailyExpensesRange(params: {
       dailyStart <= dailyEnd &&
       enumerateDays(dailyStart, dailyEnd).length <= MAX_DAILY_RANGE_DAYS
     ) {
-      return { preset: "custom", startDate: dailyStart, endDate: dailyEnd };
+      return {
+        preset: "custom",
+        startDate: dailyStart,
+        endDate: dailyEnd < today ? dailyEnd : today,
+        requestedEndDate: dailyEnd,
+      };
     }
   }
 
-  return { preset: "7d", ...getLastNDaysRange(30) };
+  if (params.dailyRange === "30d") {
+    const range = getLastNDaysRange(30);
+    return { preset: "30d", ...range, requestedEndDate: range.endDate };
+  }
+
+  const range = getLastNDaysRange(7);
+  return { preset: "7d", ...range, requestedEndDate: range.endDate };
 }
