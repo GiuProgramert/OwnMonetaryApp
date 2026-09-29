@@ -49,3 +49,9 @@ supabase/.temp/
 supabase/.branches/
 # Playwright CLI output (may contain credentials)
 .playwright-cli/
+
+# Playwright tests (e2e/): sesión del usuario QA y reportes
+/e2e/.auth/
+/test-results/
+/playwright-report/
+/blob-report/

@@ -10,6 +10,17 @@ const compat = new FlatCompat({
 });
 
 const eslintConfig = [
+  // Salida generada (build de Next, reportes de Playwright) y el worker de pdf.js que copia
+  // scripts/copy-pdf-worker.mjs: no es código nuestro.
+  {
+    ignores: [
+      ".next/**",
+      "public/pdf.worker.min.mjs",
+      "test-results/**",
+      "playwright-report/**",
+      "blob-report/**",
+    ],
+  },
   ...compat.extends("next/core-web-vitals", "next/typescript"),
 ];
 

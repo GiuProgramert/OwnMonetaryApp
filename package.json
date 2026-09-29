@@ -9,7 +9,8 @@
     "db:pull": "supabase db pull --declarative --schema public --strict-coverage",
     "db:push": "supabase db push --linked",
     "db:list": "supabase migration list --linked",
-    "db:types": "supabase gen types typescript --linked --schema public > lib/supabase/database.types.ts"
+    "db:types": "supabase gen types typescript --linked --schema public > lib/supabase/database.types.ts",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -38,6 +39,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "3",
+    "@playwright/test": "^1.63.0",
     "@types/node": "20",
     "@types/react": "19",
     "@types/react-dom": "19",
