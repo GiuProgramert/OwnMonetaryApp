@@ -18,23 +18,36 @@ usuario puede hacer. No es el resumen del plan, es el resultado.
 
 ## Cómo ejecutar este plan
 
-Este bloque se copia tal cual, y le habla a quien implemente — que no es quien lo escribió y no vio
-la conversación donde se decidió todo esto.
+Este bloque se copia tal cual, y le habla a quienes ejecuten — que no son quien lo escribió y no
+vieron la conversación donde se decidió todo esto.
 
+> Este plan se ejecuta con la skill `ejecutar-plan`: un **orquestador** lanza al agente
+> `implementador`, que escribe el código, y después al agente `tester`, que lo prueba en el
+> navegador contra *Criterios de prueba* y deja los tests en `e2e/`. Las incidencias vuelven al
+> implementador a través del orquestador hasta que todo pase.
+>
+> **Implementador:**
+>
 > - **Verificá antes de arrancar que lo que este plan afirma del código siga siendo cierto.** Tiene
 >   fecha; los archivos, funciones y componentes que nombra pueden haber cambiado desde entonces.
 > - **Seguí el orden de las fases.** Cada una se apoya en la anterior; donde el orden no importa,
 >   está dicho.
-> - **Si la realidad contradice al plan, pará y preguntá.** Un plan equivocado en un punto se
->   corrige en dos minutos; una solución improvisada alrededor del error se descubre semanas después.
+> - **Si la realidad contradice al plan, pará y reportáselo al orquestador**, que le pregunta al
+>   usuario. Un plan equivocado en un punto se corrige en dos minutos; una solución improvisada
+>   alrededor del error se descubre semanas después.
 > - **No amplíes el alcance.** Lo que no está en un punto, no entra — y lo que está en *Fuera de
->   alcance* se descartó a propósito, con motivo. Si algo parece faltar, preguntá antes de agregarlo.
+>   alcance* se descartó a propósito, con motivo. Si algo parece faltar, reportalo antes de agregarlo.
 > - **Respetá los puntos marcados *(opcional)*:** son opcionales de verdad.
-> - **Marcá `[x]` a medida que avanzás** y actualizá el **Estado** del encabezado. Un punto que
->   quede sin hacer se deja en `[ ]` con el motivo escrito ahí mismo — nunca se borra.
-> - **Al terminar, escribí las Notas de cierre** al final del documento: qué se desvió del plan y
->   por qué, qué quedó sin hacer, qué se verificó y **qué no se pudo verificar**. Lo último es lo
->   más valioso de la sección y lo primero que se omite.
+> - **Marcá `[x]` apenas terminás cada punto** y actualizá el **Estado** del encabezado. Un punto
+>   que quede sin hacer se deja en `[ ]` con el motivo escrito ahí mismo — nunca se borra.
+> - **No escribas tests e2e, ni el Registro de ejecución, ni las Notas de cierre.**
+>
+> **Tester:** verificá cada criterio `P.n` de *Criterios de prueba* que cubra los puntos de la
+> ronda, escribilo como test en `e2e/` nombrado con su id, y no modifiques el código de la app.
+>
+> **Orquestador:** llevá el *Registro de ejecución* y, al terminar, escribí las **Notas de
+> cierre**: qué se desvió del plan y por qué, qué quedó sin hacer, qué se verificó y **qué no se
+> pudo verificar**. Lo último es lo más valioso de la sección y lo primero que se omite.
 
 ## Contexto
 
@@ -79,11 +92,30 @@ archivos nuevos valen más que tres párrafos. Marcá qué parte es la que absor
 Siempre presente. Siempre incluye:
 
 - [ ] **N.1** `npm run lint` y `npm run build`. <Dónde suele romper esto en particular.>
-- [ ] **N.2** Probar los bordes: <lista concreta de casos, no "probar bien">.
-- [ ] **N.3** Verificar en mobile / dark mode <si hay UI de por medio>.
-- [ ] **N.4** Documentar en `docs/<archivo>.md`: <qué>.
-- [ ] **N.5** Agregar a `CLAUDE.md` la sección del módulo nuevo y las reglas que impone.
-- [ ] **N.6** Notas de cierre al final de este documento, con lo que se desvió del plan.
+- [ ] **N.2** Documentar en `docs/<archivo>.md`: <qué>.
+- [ ] **N.3** Agregar a `CLAUDE.md` la sección del módulo nuevo y las reglas que impone.
+- [ ] **N.4** Notas de cierre al final de este documento, con lo que se desvió del plan — *las
+  escribe el orquestador al terminar las pruebas, no el implementador.*
+
+Los casos borde no van acá: van en *Criterios de prueba*.
+
+## Criterios de prueba
+
+Lo que el tester verifica en el navegador con el usuario de QA y deja escrito como test en
+`e2e/<feature>.spec.ts`, nombrado con el id (`test("P.1 — …")`). Numeración estable, igual que los
+puntos. Cada criterio: los puntos que cubre, los datos que el test crea (y borra), la acción, y el
+resultado **concreto** que se ve. Incluye los bordes (vacío, límite, validación, el caso de cada
+⚠️) y, si hay UI nueva, la vista mobile.
+
+- **P.1** (<puntos>) — Con <datos que crea el test>, en `<ruta>` <acción> ⇒ <resultado observable:
+  texto, monto, URL, elemento que aparece o desaparece>.
+- **P.2** (<puntos>) — <borde: vacío / límite / error de validación con su mensaje exacto>.
+
+**No cubierto por e2e** *(si aplica)*: lo que no se puede probar desde el navegador (RPC sin UI,
+trigger, algo que depende del paso del tiempo, algo que el usuario QA no tiene permiso de hacer,
+como crear `movement_types`) y cómo se verifica en su lugar.
+
+- **<Qué>** — <cómo se verifica: query de `docs/database.md`, a mano, o no se verifica>.
 
 ## Fuera de alcance
 
@@ -97,8 +129,17 @@ Sin esta sección, quien implemente re-agrega de buena fe justo lo que se decidi
 Lo que puede salir mal y no lo cubre ningún punto. Sobre todo: qué toca este plan que ya funciona
 hoy, y cómo verificar que no se rompió.
 
-## Notas de cierre (ejecución del <YYYY-MM-DD>)   ← se agrega al ejecutar, no antes
+## Registro de ejecución   ← lo agrega y lo lleva el orquestador al ejecutar, no antes
 
-Qué se desvió del plan y por qué. Qué quedó sin hacer, con el motivo. Qué se verificó y **qué no se
-pudo verificar** — esto último es lo más importante de la sección.
+- **Ronda 1 (<YYYY-MM-DD>)** — implementador: puntos <…>; desvíos: <…>. Tester: <P.n pasan>;
+  incidencias I-1 <resumen> (punto <X.Y>) → corregida en ronda 2.
+- **Bloqueos y respuestas del usuario** — <pregunta> → <respuesta textual>.
+- **Correcciones pedidas después del cierre** — C-1 <pedido textual> → <qué se cambió, test que
+  la cubre>.
+
+## Notas de cierre (ejecución del <YYYY-MM-DD>)   ← las escribe el orquestador al terminar
+
+Qué se desvió del plan y por qué. Qué quedó sin hacer, con el motivo. Qué incidencias aparecieron y
+cómo se resolvieron. Qué tests quedaron en `e2e/` (`npm run test:e2e`). Qué se verificó y **qué no
+se pudo verificar** — esto último es lo más importante de la sección.
 ```

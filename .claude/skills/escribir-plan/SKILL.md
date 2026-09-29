@@ -14,16 +14,26 @@ meses) no las vuelva a discutir. Los planes existentes son
 
 Todo el documento va **en español**, igual que el resto de `docs/`.
 
-> **Esta skill es para escribir un plan, no para ejecutarlo.** Si lo que tenés que hacer es
-> implementar un plan que ya existe, seguí el bloque "Cómo ejecutar este plan" del propio documento
-> y no vuelvas sobre esta skill: acá abajo hay método de planificación, y aplicarlo mientras se
-> implementa lleva a reabrir decisiones que ya están cerradas.
+> **Esta skill es para escribir un plan, no para ejecutarlo.** Los planes se ejecutan en otra
+> sesión con la skill [`ejecutar-plan`](../ejecutar-plan/SKILL.md), que orquesta a los subagentes
+> `implementador` y `tester` (`.claude/agents/`). Si lo que tenés que hacer es implementar un plan
+> que ya existe, usá esa skill y no vuelvas sobre esta: acá abajo hay método de planificación, y
+> aplicarlo mientras se implementa lleva a reabrir decisiones que ya están cerradas.
 
 ## Quien ejecuta el plan no es quien lo escribe
 
-**El agente que implementa arranca en frío.** No vio la conversación, no sabe qué se descartó, no
-sabe por qué el punto 5.3 dice lo que dice. Lo único que recibe es el archivo. De ahí salen cinco
-reglas que atraviesan todo lo demás:
+El plan lo ejecuta, en otra sesión, un **orquestador** que lanza dos subagentes:
+
+- **`implementador`** (Sonnet) — escribe el código siguiendo el documento y marca `[x]` cada punto.
+  Es literal: hace lo que el punto dice, no lo que quisiste decir.
+- **`tester`** (skill `playwright-cli`) — prueba en el navegador, con el usuario de QA
+  (`QA_EMAIL`/`QA_PASSWORD` en `.env.local`), lo que hizo el implementador contra la sección
+  *Criterios de prueba*; reporta incidencias al orquestador, que se las devuelve al implementador,
+  y deja cada prueba escrita como test en `e2e/` para correrla sin agentes (`npm run test:e2e`).
+
+**Los tres arrancan en frío.** No vieron la conversación, no saben qué se descartó, no saben por qué
+el punto 5.3 dice lo que dice. Lo único que reciben es el archivo. De ahí salen seis reglas que
+atraviesan todo lo demás:
 
 1. **El documento se basta solo.** Nada de "como hablamos", "el enfoque que elegiste", "la opción
    b". Si una decisión importa, va escrita completa, con sus alternativas y su porqué — aunque en el
@@ -39,14 +49,19 @@ reglas que atraviesan todo lo demás:
    en sesiones distintas o en paralelo: lo que no está escrito como dependencia, se pisa.
 5. **El plan tiene fecha y el código sigue vivo.** Todo lo que el plan afirma sobre el código puede
    haber cambiado desde entonces. Por eso el documento lleva su propio bloque de instrucciones de
-   ejecución (ver abajo): el implementador puede no tener esta skill cargada.
+   ejecución (ver abajo): ninguno de los agentes tiene esta skill cargada.
+6. **Lo que se construye dice cómo se prueba.** El tester no adivina qué es "correcto": compara la
+   app contra la sección *Criterios de prueba*. Un comportamiento sin criterio no se prueba, y una
+   incidencia contra un criterio vago termina en discusión entre agentes en vez de en arreglo. Ver
+   [Los criterios de prueba](#los-criterios-de-prueba).
 
 ### El bloque "Cómo ejecutar este plan"
 
-Va **dentro del documento**, después del Objetivo, y le habla al implementador. Cubre: verificar
-que lo que el plan afirma del código siga siendo cierto antes de arrancar; seguir el orden de las
-fases salvo que se diga lo contrario; **parar y preguntar** cuando la realidad contradice al plan,
-en vez de improvisar una salida; no ampliar el alcance; y marcar `[x]` a medida que avanza.
+Va **dentro del documento**, después del Objetivo. Describe el ciclo orquestador → implementador →
+tester, y le habla sobre todo al implementador: verificar que lo que el plan afirma del código siga
+siendo cierto antes de arrancar; seguir el orden de las fases salvo que se diga lo contrario;
+**parar y reportar al orquestador** cuando la realidad contradice al plan, en vez de improvisar una
+salida; no ampliar el alcance; y marcar `[x]` a medida que avanza.
 
 La plantilla lo trae redactado — se copia tal cual.
 
@@ -66,13 +81,16 @@ La plantilla lo trae redactado — se copia tal cual.
 3. **Buscá las restricciones que condicionan el diseño**, no las que son trivia. Las buenas son las
    que cambian *qué* se puede construir: un dato que no existe en el modelo, un límite del runtime
    o de la API, un trigger que ya escribe la columna que ibas a escribir vos.
-4. **Mostrá los puntos numerados en el chat**, agrupados por fase, y decí explícitamente que no
-   escribiste nada.
-5. **Separá lo que pidió el usuario de lo que agregaste vos.** Marcá tus ideas con *(idea mía)* y
+4. **Pensá cómo se prueba cada cosa visible**: qué ruta, qué datos tiene que crear el test, qué
+   resultado concreto se ve. Si algo no se puede probar desde el navegador con el usuario de QA,
+   anotalo ya — a veces eso cambia el diseño.
+5. **Mostrá los puntos numerados en el chat**, agrupados por fase, con un resumen corto de los
+   criterios de prueba, y decí explícitamente que no escribiste nada.
+6. **Separá lo que pidió el usuario de lo que agregaste vos.** Marcá tus ideas con *(idea mía)* y
    cerrá con un resumen de qué es de cada uno, para que podar sea decir "sacá 4.3 y 5.6" y nada más.
    **Lo que el usuario pode no se borra: baja a *Fuera de alcance* con el motivo.** Un punto
    eliminado y no registrado vuelve solo, propuesto de nuevo por el agente que implementa.
-6. **Terminá con las decisiones que bloquean.** Ver abajo.
+7. **Terminá con las decisiones que bloquean.** Ver abajo.
 
 ### Tiempo 2 — Escribir el documento
 
@@ -111,6 +129,8 @@ final de la fase.
 Un punto bueno:
 
 - **Es accionable y verificable.** Nombra el archivo que crea o toca, y qué queda funcionando.
+  Pensá en Sonnet ejecutándolo al pie de la letra: si el punto admite dos lecturas, va a elegir una
+  y la va a marcar `[x]`.
 - **Dice el porqué cuando no es obvio.** No "barras horizontales", sino "barras horizontales, no
   verticales: los nombres en español son largos y rotados quedan ilegibles".
 - **Cabe en una cabeza.** Si necesita tres párrafos, son tres puntos.
@@ -135,18 +155,57 @@ Un punto malo: "investigar cómo hacer los gráficos", "mejorar la UX", "agregar
 
 ## Las secciones que hacen la diferencia
 
-La plantilla las tiene todas, pero estas cuatro son las que separan un plan útil de una lista de
+La plantilla las tiene todas, pero estas cinco son las que separan un plan útil de una lista de
 tareas:
 
 - **Contexto / restricciones.** Lo que descubriste leyendo el código y condiciona el diseño.
   Numeradas, porque las fases las van a referenciar.
 - **Decisiones tomadas.** Qué se decidió **y por qué**, incluida la contrapartida que se aceptó.
   Sin la contrapartida escrita, la decisión se relitiga sola.
+- **Criterios de prueba.** Lo que el tester va a verificar en el navegador y convertir en tests.
+  Ver la sección siguiente.
 - **Fuera de alcance.** Lo que se propuso y se descartó, con el motivo, y lo que directamente no
   entra. Es la única defensa contra que el implementador lo re-agregue de buena fe. Si el usuario no
   podó nada, decilo — "el usuario revisó los puntos y no eliminó ninguno" también es información.
 - **Riesgos conocidos.** Lo que puede salir mal y no lo cubre ningún punto. Especialmente: lo que
   este plan toca y afecta a pantallas que ya funcionan.
+
+## Los criterios de prueba
+
+Sección propia del plan, numerada `P.1`, `P.2`…, **estable** igual que los puntos: el tester nombra
+cada test con su id (`test("P.3 — …")`), así que una falla en `npm run test:e2e` meses después dice
+qué criterio de qué plan se rompió.
+
+Un criterio bueno:
+
+- **Dice qué puntos cubre**: `P.3 (5.1, 5.4)`. Así el orquestador sabe qué probar después de cada
+  ronda, y una incidencia vuelve al punto exacto.
+- **Es observable desde el navegador**: ruta, acción, y un resultado concreto que se ve en
+  pantalla — un texto, un monto, una URL, un elemento que aparece o desaparece. No "funciona bien".
+- **Declara los datos que necesita**, que el test crea y borra solo. Nunca "con la cuenta del
+  usuario": el usuario de QA tiene sus propios datos y los tests no pueden depender de ellos.
+- **Incluye los bordes**: vacío, límite, error de validación, el caso que el ⚠️ del punto advierte.
+  Los casos borde que antes iban sueltos en la fase de cierre ahora viven acá.
+
+```markdown
+- **P.3** (5.1, 5.4) — Con una deuda en cuotas de 12 × Gs. 100.000 recién creada, `/protected/debts`
+  la muestra con "0/12 cuotas" y "Gs. 1.200.000 por pagar". Después de pagar una cuota desde
+  `/protected/debts/<id>/pay`, muestra "1/12" y "Gs. 1.100.000", y el movimiento aparece en
+  `/protected/movements` con el tipo de la deuda.
+```
+
+Restricciones del usuario de QA que condicionan qué se puede probar — tenelas en cuenta al
+escribir los criterios, y si una feature choca con ellas, decilo en el criterio:
+
+- ⚠️ No puede crear ni editar `movement_types` (la política solo deja al dueño): usa tipos
+  existentes.
+- La base es la remota real (no hay Docker local): todo lo que un test crea queda escrito hasta que
+  el test lo borra.
+
+Lo que **no** se puede probar desde el navegador (una RPC sin UI, un trigger, un caso que depende
+del paso del tiempo) se lista aparte en la misma sección, bajo *No cubierto por e2e*, con cómo se
+verifica en su lugar (una query de `docs/database.md`, a mano, o no se verifica). El tester no
+inventa una forma de probarlo.
 
 ## Fases
 
@@ -162,20 +221,23 @@ importa porque cada fase se apoya en la anterior:
 6. Cierre                        (lint, build, bordes, docs, notas)
 ```
 
-La **fase de cierre nunca se omite** y siempre incluye: `npm run lint` y `npm run build`, la lista
-concreta de casos borde a probar (no "probar bien"), qué documentar en `docs/` y `CLAUDE.md`, y el
-punto de escribir las notas de cierre.
+La **fase de cierre nunca se omite** y siempre incluye: `npm run lint` y `npm run build`
+(implementador), qué documentar en `docs/` y `CLAUDE.md` (implementador), y las Notas de cierre
+(las escribe el **orquestador**, que es el único que ve los reportes de ambos agentes). Los casos
+borde ya no van en el cierre: van en *Criterios de prueba*.
 
 ## Cuando el plan se ejecuta
 
-Esto vale igual si lo ejecutás vos en otra sesión o si lo ejecuta otro agente — por eso está
-duplicado dentro del documento, en el bloque "Cómo ejecutar este plan". La duplicación es a
-propósito: quien implementa puede no tener esta skill cargada.
+Lo detalla la skill [`ejecutar-plan`](../ejecutar-plan/SKILL.md) y está resumido dentro del
+documento, en el bloque "Cómo ejecutar este plan". La duplicación es a propósito: los agentes que
+ejecutan no tienen esta skill cargada.
 
-- Marcá `[x]` a medida que avanzás, en el archivo.
-- Un punto que quedó afuera se marca `[ ]` **con el motivo escrito ahí mismo** — bloqueado, sin
+- El **implementador** marca `[x]` a medida que avanza, en el archivo, y actualiza el **Estado**.
+  Un punto que quedó afuera se marca `[ ]` **con el motivo escrito ahí mismo** — bloqueado, sin
   acceso, explícitamente opcional. Nunca se borra el punto.
-- Actualizá el **Estado** del encabezado.
-- Agregá **Notas de cierre** al final: qué se desvió del plan, qué se verificó y qué no se pudo
-  verificar. Ser honesto acá es lo que hace que el próximo plan sirva; ver el cierre de
-  `movements-implementation.md`, que dice cuál fase quedó bloqueada y por qué.
+- El **tester** no edita el plan: su veredicto va al orquestador, sus pruebas a `e2e/`.
+- El **orquestador** lleva el **Registro de ejecución** (rondas, incidencias `I-n`, respuestas del
+  usuario, correcciones `C-n` pedidas después) y escribe las **Notas de cierre**: qué se desvió del
+  plan, qué se verificó y qué no se pudo verificar. Ser honesto acá es lo que hace que el próximo
+  plan sirva; ver el cierre de `movements-implementation.md`, que dice cuál fase quedó bloqueada y
+  por qué.

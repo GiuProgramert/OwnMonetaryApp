@@ -13,11 +13,16 @@ npm run dev      # start dev server (localhost:3000)
 npm run build    # production build
 npm run start    # run production build
 npm run lint     # eslint (next/core-web-vitals + next/typescript)
+npm run test:e2e # Playwright e2e tests in e2e/, logged in as the QA user
 ```
 
-There is no test suite configured in this repo.
+The only test suite is Playwright e2e (`playwright.config.ts`, `e2e/`). It runs against the **real remote Supabase** as the QA user (`QA_EMAIL`/`QA_PASSWORD`), serially (`workers: 1`). A `setup` project logs in once and saves the session to `e2e/.auth/qa.json` (gitignored); every other test starts authenticated. It reuses a running `npm run dev` on `localhost:3000` (override with `E2E_BASE_URL`) or starts one — Next 16 won't run two `next dev` on the same project, so don't point it at a second port. Tests are named after the plan criterion they cover (`P.n — …`); see `.claude/agents/tester.md` for the conventions.
 
-Environment variables live in `.env.local`: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `NEXT_PUBLIC_BASE_URL`.
+Environment variables live in `.env.local`: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `NEXT_PUBLIC_BASE_URL`, plus `QA_EMAIL` / `QA_PASSWORD` (the QA user the `tester` agent logs in with — never print or commit them).
+
+## Plans and orchestrated execution
+
+Features are planned with the `escribir-plan` skill into `docs/plans/<feature>-implementation.md`, and executed in a separate session with the `ejecutar-plan` skill: the session acts as **orchestrator** and launches the subagents in `.claude/agents/` — `implementador` (Sonnet, writes code, marks `[x]`) and `tester` (playwright-cli, verifies the plan's *Criterios de prueba* in the browser and writes Playwright tests to `e2e/`). The orchestrator routes the tester's incidents back to the implementador, keeps the plan's *Registro de ejecución*, and handles follow-up corrections from the user.
 
 ## Architecture
 
