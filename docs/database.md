@@ -173,6 +173,12 @@ período y consumiría tope de presupuesto. **Toda agregación nueva sobre `move
 llevar ese filtro**; olvidarla deja una inconsistencia silenciosa entre pantallas. `TopExpensesCard`
 no usa RPC y filtra en JS.
 
+**Única excepción: `get_movements_totals` con `p_account_id`.** Filtrando por una cuenta, las
+transferencias sí cuentan (`transfer_id is null or p_account_id is not null`): la entrante como
+ingreso y la saliente como egreso, para que el "Balance neto" de `/protected/movements` refleje lo
+que le pasó a esa cuenta. Sin filtro de cuenta se siguen excluyendo, porque las dos patas se
+cancelan en el neto pero inflarían ingresos y egresos. Las demás agregaciones no tienen excepción.
+
 Diagnóstico de pares desapareados (p. ej. tras borrar una cuenta que participó en transferencias,
 por el `ON DELETE CASCADE` de `movements.account_id`):
 

@@ -132,7 +132,8 @@ transferencia. Estructura: `lib/schemas/transfers.ts`, `lib/services/transfers{,
 [`docs/database.md`](docs/database.md#transferencias-entre-cuentas).
 
 **Dos reglas:** (1) toda agregación nueva sobre `movements` tiene que excluir
-`transfer_id is not null`; (2) `movement_types` ya no es escribible por cualquier autenticado: solo
+`transfer_id is not null` (única excepción: `get_movements_totals` con cuenta filtrada, ver
+`docs/database.md`); (2) `movement_types` ya no es escribible por cualquier autenticado: solo
 el dueño (UUID literal en la política), y el tipo `Transferencia` (`transferMovementTypeId`) no se
 ofrece en selects ni se edita/borra.
 

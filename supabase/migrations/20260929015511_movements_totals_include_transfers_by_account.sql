@@ -1,3 +1,6 @@
+-- Con una cuenta filtrada, las transferencias cuentan en los totales: la entrante como ingreso y la
+-- saliente como egreso, para que el neto refleje lo que pasó con esa cuenta. Sin filtro de cuenta
+-- se siguen excluyendo: las dos patas se cancelan en el neto pero inflarían ingresos y egresos.
 CREATE OR REPLACE FUNCTION public.get_movements_totals (
   p_account_id       uuid DEFAULT NULL::uuid,
   p_movement_type_id uuid DEFAULT NULL::uuid,
@@ -24,5 +27,3 @@ CREATE OR REPLACE FUNCTION public.get_movements_totals (
     and (p_start_date is null or m.date >= p_start_date)
     and (p_end_date   is null or m.date < (p_end_date + interval '1 day'));
 $function$;
-
-GRANT EXECUTE ON FUNCTION "public"."get_movements_totals"(uuid, uuid, date, date) TO PUBLIC, "anon", "authenticated", "postgres", "service_role";

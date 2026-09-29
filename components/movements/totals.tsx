@@ -8,7 +8,7 @@ interface Props {
 
 export default async function MovementsTotals({ filter }: Props) {
   const totals = await getMovementsTotals(filter);
-
+  
   return (
     <div className="grid gap-4 sm:grid-cols-3">
       <Card>
