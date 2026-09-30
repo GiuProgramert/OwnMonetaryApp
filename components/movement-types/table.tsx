@@ -8,6 +8,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import RecordCard from "@/components/record-card";
+import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { getMovementTypes } from "@/lib/services/movement-types";
 import { transferMovementTypeId } from "@/lib/constants";
@@ -59,8 +60,15 @@ export default async function MovementTypesTable() {
               <TableBody>
                 {movementTypes.map((movementType) => (
                   <TableRow key={movementType.id}>
-                    <TableCell className="max-w-56 truncate">
-                      {movementType.name}
+                    <TableCell className="max-w-56">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="truncate">{movementType.name}</span>
+                        {movementType.exclude_from_expense_charts && (
+                          <Badge variant="secondary" className="shrink-0">
+                            Excluido de gráficos
+                          </Badge>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell className="max-w-56 truncate">
                       {movementType.description}
@@ -101,6 +109,11 @@ export default async function MovementTypesTable() {
                         className="w-3 h-3 rounded-full shrink-0"
                       />
                       <span className="min-w-0 break-words">{movementType.name}</span>
+                      {movementType.exclude_from_expense_charts && (
+                        <Badge variant="secondary" className="shrink-0">
+                          Excluido de gráficos
+                        </Badge>
+                      )}
                     </div>
                   }
                   actions={

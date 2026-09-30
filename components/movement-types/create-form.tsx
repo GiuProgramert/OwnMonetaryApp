@@ -1,6 +1,7 @@
 "use client";
 
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -15,11 +16,13 @@ export default function CreateMovementTypeForm() {
 
   const {
     register,
+    control,
     handleSubmit,
     formState: { errors },
     getValues,
   } = useForm<z.infer<typeof movementTypeSchema>>({
     resolver: zodResolver(movementTypeSchema),
+    defaultValues: { exclude_from_expense_charts: false },
   });
 
   const onSubmit = async (data: z.infer<typeof movementTypeSchema>) => {
@@ -68,6 +71,28 @@ export default function CreateMovementTypeForm() {
           {errors.color && (
             <p className="text-sm text-destructive">{errors.color.message}</p>
           )}
+        </div>
+      </div>
+      <div className="flex items-start gap-2">
+        <Controller
+          control={control}
+          name="exclude_from_expense_charts"
+          render={({ field }) => (
+            <Checkbox
+              id="exclude_from_expense_charts"
+              checked={field.value}
+              onCheckedChange={(checked) => field.onChange(checked === true)}
+            />
+          )}
+        />
+        <div className="grid gap-1">
+          <Label htmlFor="exclude_from_expense_charts">
+            Excluir de los gráficos de gastos
+          </Label>
+          <p className="text-sm text-muted-foreground">
+            No aparece en «Gastos por tipo» ni en «Gastos diarios por tipo». Sigue contando en
+            saldos, egresos y flujo mensual.
+          </p>
         </div>
       </div>
       <div>

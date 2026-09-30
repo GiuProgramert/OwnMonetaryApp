@@ -9,7 +9,7 @@ export async function getMovementTypes({
 
   let query = supabase
     .from("movement_types")
-    .select("id,name,description,color,created_at,updated_at");
+    .select("id,name,description,color,exclude_from_expense_charts,created_at,updated_at");
 
   if (!includeTransferType) {
     query = query.neq("id", transferMovementTypeId);
@@ -29,7 +29,7 @@ export async function getMovementTypeById(id: string) {
 
   const { data, error } = await supabase
     .from("movement_types")
-    .select("id,name,description,color,created_at,updated_at")
+    .select("id,name,description,color,exclude_from_expense_charts,created_at,updated_at")
     .eq("id", id)
     .single();
 
@@ -42,4 +42,20 @@ export async function getMovementTypeById(id: string) {
   }
 
   return data as MovementType;
+}
+
+export async function getExcludedFromExpenseChartsTypeNames(): Promise<string[]> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("movement_types")
+    .select("name")
+    .eq("exclude_from_expense_charts", true)
+    .order("name");
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return (data ?? []).map((row) => row.name);
 }

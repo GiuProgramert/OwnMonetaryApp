@@ -181,6 +181,7 @@ export type Database = {
           color: string
           created_at: string | null
           description: string | null
+          exclude_from_expense_charts: boolean
           id: string
           name: string
           updated_at: string | null
@@ -189,6 +190,7 @@ export type Database = {
           color?: string
           created_at?: string | null
           description?: string | null
+          exclude_from_expense_charts?: boolean
           id?: string
           name: string
           updated_at?: string | null
@@ -197,6 +199,7 @@ export type Database = {
           color?: string
           created_at?: string | null
           description?: string | null
+          exclude_from_expense_charts?: boolean
           id?: string
           name?: string
           updated_at?: string | null

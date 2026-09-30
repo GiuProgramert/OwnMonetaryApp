@@ -27,6 +27,7 @@ CREATE OR REPLACE FUNCTION public.get_daily_expenses_by_movement_type (
     join public.movement_types mt on mt.id = m.movement_type_id
     where m.type = 'debit'
       and m.transfer_id is null
+      and not mt.exclude_from_expense_charts
       and a.user_id = (select auth.uid())
       and (p_account_id is null or m.account_id = p_account_id)
       and m.date >= p_start_date

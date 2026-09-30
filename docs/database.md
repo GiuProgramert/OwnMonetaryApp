@@ -133,10 +133,10 @@ Los cuerpos están en `supabase/schemas/public/functions/`.
 
 | Función | Devuelve | Uso |
 | --- | --- | --- |
-| `get_expenses_by_movement_type(p_account_id, p_start_date, p_end_date)` | `(movement_type_id, name, color, total)` por tipo, solo `debit` | `lib/services/dashboard.ts` → `getExpensesByMovementType` |
+| `get_expenses_by_movement_type(p_account_id, p_start_date, p_end_date)` | `(movement_type_id, name, color, total)` por tipo, solo `debit`; excluye los tipos con `exclude_from_expense_charts` | `lib/services/dashboard.ts` → `getExpensesByMovementType` |
 | `get_movements_totals(p_account_id, p_movement_type_id, p_start_date, p_end_date)` | `(income, expense)` | `lib/services/movements.ts` → `getMovementsTotals` (consumida también por `components/movements/totals.tsx`) |
 | `get_monthly_flow(p_account_id, p_start_date, p_end_date)` | `(month, income, expense)`, un mes por fila **solo si tiene movimientos** | `lib/services/dashboard.ts` → `getMonthlyFlow`, que rellena los meses vacíos del rango antes de pasarlo al gráfico |
-| `get_daily_expenses_by_movement_type(p_start_date, p_end_date, p_account_id)` | `(movement_type_id, name, color, total, days, amounts)`, **una fila por tipo** con arrays de días y montos, solo `debit` | `lib/services/dashboard.ts` → `getDailyExpensesByMovementType`, que rellena los días vacíos y agrupa en "Otros" |
+| `get_daily_expenses_by_movement_type(p_start_date, p_end_date, p_account_id)` | `(movement_type_id, name, color, total, days, amounts)`, **una fila por tipo** con arrays de días y montos, solo `debit`; excluye los tipos con `exclude_from_expense_charts` | `lib/services/dashboard.ts` → `getDailyExpensesByMovementType`, que rellena los días vacíos y agrupa en "Otros" |
 
 Los parámetros de cada función son `nullable` (salvo `p_start_date`/`p_end_date` en
 `get_daily_expenses_by_movement_type`, sin default a propósito): `null` significa "sin filtrar".
@@ -146,6 +146,15 @@ Los parámetros de cada función son `nullable` (salvo `p_start_date`/`p_end_dat
 ya son 1012 filas, y PostgREST corta en 1000 (`db.max_rows`) sin avisar. Agrupando por tipo y
 devolviendo `days`/`amounts` como arrays alineados (`array_agg(... order by day)`), la función nunca
 supera una fila por tipo de movimiento del usuario.
+
+**`movement_types.exclude_from_expense_charts`:** `get_expenses_by_movement_type` y
+`get_daily_expenses_by_movement_type` descartan los tipos marcados con
+`and not mt.exclude_from_expense_charts`. El filtro está en SQL y no en JS porque el top 8 / "Otros"
+y los porcentajes se calculan en `lib/services/dashboard.ts` sobre lo que devuelve la RPC: un tipo
+quitado después ya habría ocupado un lugar del top y entrado en el total. `get_movements_totals`,
+`get_monthly_flow` y los presupuestos **no** lo respetan a propósito: reflejan el movimiento real de
+plata y tienen que cuadrar con los saldos. El campo es global (`movement_types` no tiene dueño), y la
+migración marca `Prestado`.
 
 ⚠️ **Probarlas desde el SQL editor de Supabase no valida la seguridad.** El SQL editor corre como
 `postgres` y bypassea la RLS — una función que devolviera datos de otros usuarios se vería igual de

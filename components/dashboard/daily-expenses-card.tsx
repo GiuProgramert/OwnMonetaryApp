@@ -1,5 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getDailyExpensesByMovementType } from "@/lib/services/dashboard";
+import { getExcludedFromExpenseChartsTypeNames } from "@/lib/services/movement-types";
 import DailyExpensesFilter from "@/components/dashboard/daily-expenses-filter";
 import DailyExpensesChart from "@/components/dashboard/daily-expenses-chart";
 import { DailyExpensesFilter as DailyExpensesFilterType } from "@/lib/schemas/dashboard";
@@ -13,7 +14,12 @@ interface Props {
 }
 
 export default async function DailyExpensesCard({ filter, preset, requestedEndDate }: Props) {
-  const { series, points, groupedCount } = await getDailyExpensesByMovementType(filter);
+  const [{ series, points, groupedCount }, excludedNames] = await Promise.all([
+    getDailyExpensesByMovementType(filter),
+    getExcludedFromExpenseChartsTypeNames(),
+  ]);
+  const excludedNote =
+    excludedNames.length > 0 ? ` No incluye: ${excludedNames.join(", ")}.` : "";
 
   const isFutureRange = filter.endDate < filter.startDate;
   const description = isFutureRange
@@ -21,12 +27,13 @@ export default async function DailyExpensesCard({ filter, preset, requestedEndDa
     : `Del ${formatFullDate(filter.startDate)} al ${formatFullDate(filter.endDate)}.${
         groupedCount > 0 ? " Los 8 tipos con más gasto; el resto, en Otros." : ""
       }`;
+  const fullDescription = `${description}${excludedNote}`;
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Gastos diarios por tipo</CardTitle>
-        <CardDescription>{description}</CardDescription>
+        <CardDescription>{fullDescription}</CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4">
         <DailyExpensesFilter

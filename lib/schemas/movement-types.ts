@@ -15,6 +15,7 @@ export const movementTypeSchema = z.object({
     .min(1, "El color es requerido")
     .max(7, "El color debe tener 7 caracteres como máximo")
     .regex(hexColorRegex, "Formato de color inválido"),
+  exclude_from_expense_charts: z.boolean(),
 });
 
 export type createMovementType = z.infer<typeof movementTypeSchema>;
@@ -24,6 +25,7 @@ export type MovementType = {
   name: string;
   description: string;
   color: string;
+  exclude_from_expense_charts: boolean;
   created_at: string;
   updated_at: string;
 };

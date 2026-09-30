@@ -69,7 +69,9 @@ sums client-side silently undercounts once a user crosses that threshold. `getMo
 (`lib/services/movements.ts`) also uses this pattern, so it stays correct at scale too. The four RPC
 functions (`get_expenses_by_movement_type`, `get_movements_totals`, `get_monthly_flow`,
 `get_daily_expenses_by_movement_type`) are versioned in `supabase/schemas/public/functions/` and
-documented in [`docs/database.md`](docs/database.md#funciones-rpc-del-dashboard). Charts are
+documented in [`docs/database.md`](docs/database.md#funciones-rpc-del-dashboard). The "Gastos por tipo" and "Gastos diarios por tipo" cards exclude movement types with
+`movement_types.exclude_from_expense_charts` (filtered inside the RPC); "Egresos", the monthly flow,
+budgets and "Mayores gastos" deliberately do not respect it. Charts are
 `"use client"` (Recharts needs the DOM) but only draw already-aggregated data passed via props; the
 server component that fetches with the RPC wraps each chart in a `<Card>` and handles the empty
 state.
