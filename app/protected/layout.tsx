@@ -8,7 +8,7 @@ export default function ProtectedLayout({
   children: React.ReactNode;
 }) {
   return (
-    <main className="min-h-dvh overflow-x-hidden">
+    <main className="min-h-dvh overflow-x-clip">
       <Toaster position="top-right" />
 
       <div className="flex w-full gap-4 p-3 pb-28 sm:p-4 md:gap-6 md:p-5 md:pb-5">

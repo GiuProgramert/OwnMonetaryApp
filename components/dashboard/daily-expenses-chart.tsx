@@ -1,7 +1,12 @@
 "use client";
 
-import { Bar, BarChart, CartesianGrid, LabelList, XAxis, YAxis } from "recharts";
-import type { LabelProps, TooltipContentProps, TooltipValueType } from "recharts";
+import { Bar, BarChart, CartesianGrid, LabelList, Rectangle, XAxis, YAxis } from "recharts";
+import type {
+  BarShapeProps,
+  LabelProps,
+  TooltipContentProps,
+  TooltipValueType,
+} from "recharts";
 import { ChartContainer, ChartTooltip, ChartConfig } from "@/components/ui/chart";
 import { DailyExpensesSeries, DailyExpensesPoint } from "@/lib/schemas/dashboard";
 import { formatCurrency, formatCompactAmount } from "@/lib/dashboard/format";
@@ -70,6 +75,11 @@ export default function DailyExpensesChart({ series, points }: Props) {
               // y al cambiar de rango por `router.push` puede quedar a medias (así se cortaban las
               // líneas del gráfico anterior).
               isAnimationActive={false}
+              // Con `shape` propio Recharts 3.8 no descarta los segmentos de alto 0. Si los
+              // descarta, el hover y el `LabelList` reciben el índice del array filtrado en vez
+              // del día: el tooltip leía otro día (o nada) y el total quedaba sin dibujar.
+              // `Rectangle` no dibuja nada con alto 0.
+              shape={(shapeProps: BarShapeProps) => <Rectangle {...shapeProps} />}
             >
               <LabelList
                 dataKey="total"

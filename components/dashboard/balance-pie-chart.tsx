@@ -78,7 +78,7 @@ export default function BalancePieChart({ slices, total, hasNonPositive }: Props
   return (
     <div className="space-y-4">
       <div className="relative">
-        <ChartContainer config={chartConfig} className="w-full">
+        <ChartContainer config={chartConfig} className="relative z-10 w-full">
           <PieChart>
             <ChartTooltip
               content={
