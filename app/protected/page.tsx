@@ -102,7 +102,7 @@ export default async function ProtectedPage({
         </div>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Suspense fallback={<ChartCardSkeleton />}>
           <BalanceDistributionCard />
         </Suspense>
@@ -131,7 +131,7 @@ export default async function ProtectedPage({
         <BudgetsCard />
       </Suspense>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Suspense fallback={<ChartCardSkeleton />}>
           <RecentMovementsCard filter={movementFilter} movementsHref={movementsHref} />
         </Suspense>

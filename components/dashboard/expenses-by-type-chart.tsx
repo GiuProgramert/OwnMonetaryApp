@@ -30,7 +30,7 @@ export default function ExpensesByTypeChart({ expenses }: Props) {
   const maxLabelChars = isMobile ? 10 : 18;
 
   return (
-    <ChartContainer config={chartConfig} className="w-full" style={{ height }}>
+    <ChartContainer config={chartConfig} className="aspect-auto w-full" style={{ height }}>
       <BarChart
         data={expenses}
         layout="vertical"

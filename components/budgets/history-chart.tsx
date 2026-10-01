@@ -28,7 +28,7 @@ export default function BudgetHistoryChart({ rows }: Props) {
   const data = [...rows].reverse();
 
   return (
-    <ChartContainer config={chartConfig} className="w-full h-72">
+    <ChartContainer config={chartConfig} className="aspect-auto w-full h-72">
       <BarChart data={data} margin={{ left: 8, right: 8 }}>
         <CartesianGrid vertical={false} />
         <XAxis dataKey="monthLabel" tickLine={false} minTickGap={16} />
