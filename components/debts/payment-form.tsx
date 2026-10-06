@@ -5,7 +5,7 @@ import { Controller, FormProvider, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
 import AccountSelect from "@/components/account-select";
-import AmountInput from "@/components/movements/amount-input";
+import AmountInput from "@/components/amount-input";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -77,7 +77,7 @@ export default function PaymentForm({
         {debt.next_due_date && ` · vence ${formatDueDate(debt.next_due_date)}`}
       </p>
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid items-start gap-4 sm:grid-cols-2">
           <div className="grid gap-2">
             <Label htmlFor="account_id">Cuenta</Label>
             <Controller

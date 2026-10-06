@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/select";
 import AccountSelect from "@/components/account-select";
 import MovementTypeSelect from "@/components/movement-type-select";
-import AmountInput from "@/components/movements/amount-input";
+import AmountInput from "@/components/amount-input";
 import { Account } from "@/lib/schemas/accounts";
 import { MovementType } from "@/lib/schemas/movement-types";
 import { createMovement, typeOptions } from "@/lib/schemas/movements";
@@ -30,7 +30,7 @@ export default function MovementFormFields({ accounts, movementTypes }: Props) {
   } = useFormContext<createMovement>();
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2">
+    <div className="grid items-start gap-4 sm:grid-cols-2">
       <div className="grid gap-2">
         <Label htmlFor="date">Fecha</Label>
         <Input

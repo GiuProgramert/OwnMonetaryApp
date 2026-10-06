@@ -1,7 +1,7 @@
 "use client";
 
 import { Controller, useFormContext } from "react-hook-form";
-import AmountInput from "@/components/movements/amount-input";
+import AmountInput from "@/components/amount-input";
 import MovementTypeSelect from "@/components/movement-type-select";
 import { Label } from "@/components/ui/label";
 import { budgetSchema } from "@/lib/schemas/budgets";
@@ -19,7 +19,7 @@ export default function BudgetFormFields({ movementTypes }: Props) {
   } = useFormContext<z.infer<typeof budgetSchema>>();
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2">
+    <div className="grid items-start gap-4 sm:grid-cols-2">
       <div className="grid gap-2">
         <Label htmlFor="movement_type_id">Tipo de movimiento</Label>
         <Controller

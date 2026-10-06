@@ -4,7 +4,7 @@ import { Controller, useFormContext } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import AccountSelect from "@/components/account-select";
-import AmountInput from "@/components/movements/amount-input";
+import AmountInput from "@/components/amount-input";
 import { Account } from "@/lib/schemas/accounts";
 import { createTransfer } from "@/lib/schemas/transfers";
 
@@ -21,7 +21,7 @@ export default function TransferFormFields({ accounts }: Props) {
   } = useFormContext<createTransfer>();
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2">
+    <div className="grid items-start gap-4 sm:grid-cols-2">
       <div className="grid gap-2">
         <Label htmlFor="date">Fecha</Label>
         <Input id="date" type="datetime-local" {...register("date")} />
