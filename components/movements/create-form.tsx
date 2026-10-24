@@ -19,7 +19,11 @@ import toast from "react-hot-toast";
 interface Props {
   accounts: Pick<Account, "id" | "name" | "color">[];
   movementTypes: Pick<MovementType, "id" | "name" | "color">[];
-  /** Cuenta preseleccionada (la principal), resuelta en el server. `""` si no hay. */
+  /**
+   * Cuenta preseleccionada al abrir el alta (la del listado o la principal), resuelta
+   * en el server. `""` si no hay. Solo vale para el primer alta: después se conserva
+   * la cuenta que eligió el usuario.
+   */
   defaultAccountId: string;
 }
 
@@ -57,7 +61,11 @@ export default function CreateMovementForm({
       return;
     }
 
-    await revalidateMyDataAndRedirect("/protected/movements");
+    // Vuelve al listado filtrado por la cuenta usada, no por la principal.
+    await revalidateMyDataAndRedirect(
+      "/protected/movements",
+      `/protected/movements?accountId=${data.account_id}`,
+    );
   };
 
   const onSubmitAndAddAnother = async (
@@ -70,7 +78,7 @@ export default function CreateMovementForm({
         description: "",
         amount: 0,
         type: "debit",
-        account_id: defaultAccountId,
+        account_id: data.account_id,
         movement_type_id: "",
       });
     } catch (error) {

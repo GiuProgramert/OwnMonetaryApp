@@ -109,7 +109,9 @@ para la URL y el `<AccountSelect>`).
 
 Igual que `startDate`/`endDate` en el dashboard, el valor resuelto viaja como **prop** a los
 filtros de cliente; no se vuelve a leer de la URL en el cliente, porque si no el select y la tabla
-se desincronizan. Puede haber varias cuentas principales (ver
+se desincronizan. La principal es solo el valor inicial del alta de movimientos: "Crear" redirige a
+`/protected/movements?accountId=<cuenta del movimiento creado>` y "Crear y agregar otro" conserva la
+cuenta que eligió el usuario. Puede haber varias cuentas principales (ver
 [`docs/database.md`](docs/database.md#cuenta-principal-accountsis_primary)); se usa la primera por
 nombre.
 
