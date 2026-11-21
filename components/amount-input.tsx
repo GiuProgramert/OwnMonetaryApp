@@ -38,11 +38,13 @@ export default function AmountInput({ id, value, onChange, disabled }: Props) {
   const [display, setDisplay] = useState(formatAmount(value));
   const [error, setError] = useState<CalculatorError | null>(null);
   const [pendingCaret, setPendingCaret] = useState<{ position: number } | null>(
-    null
+    null,
   );
 
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const extrasRef = useRef<HTMLDivElement>(null);
+  const [heldHeight, setHeldHeight] = useState<number | null>(null);
   const lastEmitted = useRef<number | undefined>(value);
   const previousAmount = useRef<number | undefined>(undefined);
 
@@ -66,10 +68,33 @@ export default function AmountInput({ id, value, onChange, disabled }: Props) {
     if (pendingCaret && document.activeElement === inputRef.current) {
       inputRef.current?.setSelectionRange(
         pendingCaret.position,
-        pendingCaret.position
+        pendingCaret.position,
       );
     }
   }, [pendingCaret]);
+
+  // Al perder el foco por un clic sobre otro control (p. ej. "Crear"), el
+  // teclado, el error y la vista previa cambian de altura entre el mousedown y
+  // el mouseup, y el clic cae fuera del botón. Se conserva la altura hasta que
+  // termina el gesto.
+  useEffect(() => {
+    if (heldHeight === null) {
+      return;
+    }
+    const release = () => {
+      setTimeout(() => setHeldHeight(null), 0);
+    };
+    const timer = setTimeout(() => setHeldHeight(null), 1000);
+    document.addEventListener("pointerup", release, true);
+    document.addEventListener("pointercancel", release, true);
+    document.addEventListener("keydown", release, true);
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener("pointerup", release, true);
+      document.removeEventListener("pointercancel", release, true);
+      document.removeEventListener("keydown", release, true);
+    };
+  }, [heldHeight]);
 
   const applyRaw = (raw: string, rawCaret: number) => {
     const resolved = resolveAmountInput(raw, isCalculating);
@@ -85,7 +110,7 @@ export default function AmountInput({ id, value, onChange, disabled }: Props) {
         raw,
         rawCaret,
         resolved.display,
-        resolved.isCalculating
+        resolved.isCalculating,
       ),
     });
 
@@ -157,6 +182,10 @@ export default function AmountInput({ id, value, onChange, disabled }: Props) {
     if (containerRef.current?.contains(e.relatedTarget as Node | null)) {
       return;
     }
+    const height = extrasRef.current?.offsetHeight ?? 0;
+    if (height > 0) {
+      setHeldHeight(height);
+    }
     resolve();
   };
 
@@ -181,6 +210,8 @@ export default function AmountInput({ id, value, onChange, disabled }: Props) {
   }
 
   const keepFocus = (e: React.MouseEvent) => e.preventDefault();
+
+  const hasExtras = isCalculating || !!error || !!preview;
 
   return (
     <div className="grid gap-2" ref={containerRef}>
@@ -209,45 +240,56 @@ export default function AmountInput({ id, value, onChange, disabled }: Props) {
           <Calculator />
         </Button>
       </div>
-      {isCalculating && (
-        <div className="flex flex-wrap gap-2">
-          {operatorButtons.map((b) => (
-            <Button
-              key={b.label}
-              type="button"
-              variant="outline"
-              size="icon"
-              aria-label={b.label}
-              tabIndex={-1}
-              onMouseDown={keepFocus}
-              onClick={() => insert(b.insert)}
+      {(hasExtras || heldHeight !== null) && (
+        <div
+          ref={extrasRef}
+          className="grid content-start gap-2"
+          style={heldHeight !== null ? { minHeight: heldHeight } : undefined}
+        >
+          {isCalculating && (
+            <div className="flex flex-wrap gap-2">
+              {operatorButtons.map((b) => (
+                <Button
+                  key={b.label}
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  aria-label={b.label}
+                  tabIndex={-1}
+                  onMouseDown={keepFocus}
+                  onClick={() => insert(b.insert)}
+                >
+                  {b.text}
+                </Button>
+              ))}
+              <Button
+                type="button"
+                variant="default"
+                size="icon"
+                aria-label="Calcular"
+                tabIndex={-1}
+                onMouseDown={keepFocus}
+                onClick={() => {
+                  resolve();
+                  inputRef.current?.focus();
+                }}
+              >
+                =
+              </Button>
+            </div>
+          )}
+          {isCalculating && (
+            // Línea reservada: que aparezca el error o la vista previa no mueve el layout.
+            <p
+              className={`min-h-5 text-sm ${
+                error ? "text-destructive" : "text-muted-foreground"
+              }`}
             >
-              {b.text}
-            </Button>
-          ))}
-          <Button
-            type="button"
-            variant="default"
-            size="icon"
-            aria-label="Calcular"
-            tabIndex={-1}
-            onMouseDown={keepFocus}
-            onClick={() => {
-              resolve();
-              inputRef.current?.focus();
-            }}
-          >
-            =
-          </Button>
+              {error ? calculatorErrorMessages[error] : preview}
+            </p>
+          )}
         </div>
       )}
-      {error ? (
-        <p className="text-sm text-destructive">
-          {calculatorErrorMessages[error]}
-        </p>
-      ) : preview ? (
-        <p className="text-sm text-muted-foreground">{preview}</p>
-      ) : null}
     </div>
   );
 }

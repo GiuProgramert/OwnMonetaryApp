@@ -202,6 +202,8 @@ Las rutas bajo `app/protected/` son la app autenticada (sidebar + contenido); `a
 - shadcn/ui está configurado con estilo `new-york`, color base `neutral` y sin prefijo (`components.json`); las primitivas viven en `components/ui/`. `axios` está configurado en `lib/axios/index.ts` con `NEXT_PUBLIC_BASE_URL` como base, pero hoy no lo usan los servicios CRUD de arriba (llaman directo a Supabase).
 - Los montos se formatean con `toLocaleString("es-PY")` y el prefijo `Gs.` (guaraní paraguayo).
 - Los colores se guardan como strings hexadecimales validados con `hexColorRegex` de `lib/constants.ts` y se muestran como muestras de color (`<input type="color">` en formularios, un `<div>` coloreado en tablas).
+- El campo tipo de movimiento del formulario de movimientos usa `MovementTypeCombobox` (buscador + "Crear «…»" que abre `CreateMovementTypeDialog`); el resto de las pantallas siguen con `MovementTypeSelect`.
+- Todo formulario que viva dentro de un `Dialog` abierto desde otro formulario corta el submit con `e.stopPropagation()`: los eventos de React burbujean por el árbol aunque el Dialog esté en un portal.
 - Todo monto se carga con `AmountInput` (`components/amount-input.tsx`), que acepta una cuenta (`=20000+10000`, Enter) además de un número; la lógica vive en `lib/amounts/calculator.ts` y es pura (sin React). Tres reglas: (1) nunca `eval` ni `new Function` para evaluar la expresión; (2) con una expresión sin resolver el formulario recibe el resultado o `0`, nunca el monto anterior; (3) los `aria-label` de sus botones no pueden contener "monto", porque los tests localizan el campo con `getByLabel("Monto")`.
 
 ### Uso de componentes

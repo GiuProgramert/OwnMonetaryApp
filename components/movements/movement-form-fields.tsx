@@ -1,6 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { Controller, useFormContext } from "react-hook-form";
+import toast from "react-hot-toast";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -11,7 +13,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import AccountSelect from "@/components/account-select";
-import MovementTypeSelect from "@/components/movement-type-select";
+import MovementTypeCombobox from "@/components/movement-type-combobox";
+import CreateMovementTypeDialog from "@/components/movement-types/create-dialog";
+import { revalidatePathServer } from "@/lib/services/revalidate";
 import AmountInput from "@/components/amount-input";
 import { Account } from "@/lib/schemas/accounts";
 import { MovementType } from "@/lib/schemas/movement-types";
@@ -23,11 +27,27 @@ interface Props {
 }
 
 export default function MovementFormFields({ accounts, movementTypes }: Props) {
+  const [types, setTypes] = useState(movementTypes);
+  const [createName, setCreateName] = useState<string | null>(null);
   const {
     register,
     control,
+    setValue,
     formState: { errors },
   } = useFormContext<createMovement>();
+
+  const handleCreated = (type: MovementType) => {
+    setTypes((prev) =>
+      [...prev, type].sort((a, b) => a.name.localeCompare(b.name, "es"))
+    );
+    setValue("movement_type_id", type.id, {
+      shouldValidate: true,
+      shouldDirty: true,
+    });
+    setCreateName(null);
+    toast.success("Tipo de movimiento creado");
+    void revalidatePathServer("/protected/movement-types");
+  };
 
   return (
     <div className="grid items-start gap-4 sm:grid-cols-2">
@@ -118,11 +138,12 @@ export default function MovementFormFields({ accounts, movementTypes }: Props) {
           name="movement_type_id"
           control={control}
           render={({ field }) => (
-            <MovementTypeSelect
+            <MovementTypeCombobox
               id="movement_type_id"
-              movementTypes={movementTypes}
+              movementTypes={types}
               value={field.value}
               onChange={field.onChange}
+              onCreateRequest={setCreateName}
             />
           )}
         />
@@ -131,6 +152,16 @@ export default function MovementFormFields({ accounts, movementTypes }: Props) {
             {errors.movement_type_id.message}
           </p>
         )}
+        <CreateMovementTypeDialog
+          open={createName !== null}
+          defaultName={createName ?? ""}
+          onOpenChange={(open) => {
+            if (!open) {
+              setCreateName(null);
+            }
+          }}
+          onCreated={handleCreated}
+        />
       </div>
     </div>
   );

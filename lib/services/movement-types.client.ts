@@ -45,7 +45,7 @@ export async function createMovementType(params: createMovementType) {
   const parsed = movementTypeSchema.safeParse(params);
 
   if (!parsed.success) {
-    throw new Error("Invalid input");
+    throw new Error("Los datos del tipo de movimiento no son válidos");
   }
 
   const { data, error } = await supabase
@@ -55,6 +55,14 @@ export async function createMovementType(params: createMovementType) {
     .single();
 
   if (error) {
+    if (error.code === "42501") {
+      throw new Error("Solo el dueño de la app puede crear tipos de movimiento");
+    }
+
+    if (error.code === "23505") {
+      throw new Error("Ya existe un tipo de movimiento con ese nombre");
+    }
+
     throw new Error(error.message);
   }
 
