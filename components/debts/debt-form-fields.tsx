@@ -3,6 +3,7 @@
 import { Controller, useFormContext } from "react-hook-form";
 import { z } from "zod";
 import AmountInput from "@/components/amount-input";
+import DatePicker from "@/components/date-picker";
 import MovementTypeSelect from "@/components/movement-type-select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -147,7 +148,18 @@ export default function DebtFormFields({ movementTypes, disableKind }: Props) {
 
       <div className="grid gap-2">
         <Label htmlFor="first_due_date">Próximo vencimiento</Label>
-        <Input id="first_due_date" type="date" {...register("first_due_date")} />
+        <Controller
+          name="first_due_date"
+          control={control}
+          render={({ field }) => (
+            <DatePicker
+              id="first_due_date"
+              value={field.value ?? ""}
+              onChange={field.onChange}
+              onBlur={field.onBlur}
+            />
+          )}
+        />
         <p className="text-sm text-muted-foreground">
           La próxima cuota o factura que vas a pagar.
         </p>

@@ -17,6 +17,7 @@ import MovementTypeCombobox from "@/components/movement-type-combobox";
 import CreateMovementTypeDialog from "@/components/movement-types/create-dialog";
 import { revalidatePathServer } from "@/lib/services/revalidate";
 import AmountInput from "@/components/amount-input";
+import DateTimePicker from "@/components/date-time-picker";
 import { Account } from "@/lib/schemas/accounts";
 import { MovementType } from "@/lib/schemas/movement-types";
 import { createMovement, typeOptions } from "@/lib/schemas/movements";
@@ -53,10 +54,17 @@ export default function MovementFormFields({ accounts, movementTypes }: Props) {
     <div className="grid items-start gap-4 sm:grid-cols-2">
       <div className="grid gap-2">
         <Label htmlFor="date">Fecha</Label>
-        <Input
-          id="date"
-          type="datetime-local"
-          {...register("date")}
+        <Controller
+          name="date"
+          control={control}
+          render={({ field }) => (
+            <DateTimePicker
+              id="date"
+              value={field.value ?? ""}
+              onChange={field.onChange}
+              onBlur={field.onBlur}
+            />
+          )}
         />
         {errors.date && (
           <p className="text-sm text-destructive">{errors.date.message}</p>

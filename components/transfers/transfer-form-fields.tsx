@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import AccountSelect from "@/components/account-select";
 import AmountInput from "@/components/amount-input";
+import DateTimePicker from "@/components/date-time-picker";
 import { Account } from "@/lib/schemas/accounts";
 import { createTransfer } from "@/lib/schemas/transfers";
 
@@ -24,7 +25,18 @@ export default function TransferFormFields({ accounts }: Props) {
     <div className="grid items-start gap-4 sm:grid-cols-2">
       <div className="grid gap-2">
         <Label htmlFor="date">Fecha</Label>
-        <Input id="date" type="datetime-local" {...register("date")} />
+        <Controller
+          name="date"
+          control={control}
+          render={({ field }) => (
+            <DateTimePicker
+              id="date"
+              value={field.value ?? ""}
+              onChange={field.onChange}
+              onBlur={field.onBlur}
+            />
+          )}
+        />
         {errors.date && (
           <p className="text-sm text-destructive">{errors.date.message}</p>
         )}

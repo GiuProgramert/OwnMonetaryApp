@@ -6,6 +6,7 @@ import toast from "react-hot-toast";
 import { z } from "zod";
 import AccountSelect from "@/components/account-select";
 import AmountInput from "@/components/amount-input";
+import DateTimePicker from "@/components/date-time-picker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -101,7 +102,18 @@ export default function PaymentForm({
 
           <div className="grid gap-2">
             <Label htmlFor="date">Fecha</Label>
-            <Input id="date" type="datetime-local" {...methods.register("date")} />
+            <Controller
+              name="date"
+              control={methods.control}
+              render={({ field }) => (
+                <DateTimePicker
+                  id="date"
+                  value={field.value ?? ""}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
+                />
+              )}
+            />
             {methods.formState.errors.date && (
               <p className="text-sm text-destructive">
                 {methods.formState.errors.date.message}
