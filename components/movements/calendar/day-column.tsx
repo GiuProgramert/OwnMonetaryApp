@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { useRef, useState } from "react";
 import { useDroppable } from "@dnd-kit/core";
 import {
   EVENT_MINUTES,
@@ -27,18 +27,77 @@ interface Props {
   /** Movimientos del día que no son "sin hora". */
   movements: Movement[];
   isToday: boolean;
-  onOpen: (movement: Movement) => void;
-  editHref: (movement: Movement) => string;
+  onOpen: (movement: Movement, anchor: HTMLElement) => void;
 }
 
 const GUTTER = 2;
+
+interface ChipProps {
+  top: number;
+  hidden: { id: string; movement: Movement }[];
+  height: number;
+  onOpen: (movement: Movement, anchor: HTMLElement) => void;
+}
+
+function OverflowChip({ top, hidden, height, onOpen }: ChipProps) {
+  const [open, setOpen] = useState(false);
+  const chipRef = useRef<HTMLButtonElement>(null);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          ref={chipRef}
+          type="button"
+          className="absolute z-[5] flex items-center justify-center rounded-sm border bg-muted text-xs font-medium hover:bg-accent"
+          style={{
+            top: (top / 60) * HOUR_HEIGHT,
+            height,
+            left: `calc(${((MAX_COLUMNS - 1) / MAX_COLUMNS) * 100}% + ${GUTTER}px)`,
+            width: `calc(${100 / MAX_COLUMNS}% - ${GUTTER * 2}px)`,
+          }}
+        >
+          {`+${hidden.length}`}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent
+        className="w-64 p-2"
+        // Si el foco vuelve al chip, queda fuera del popover de detalle y lo cierra.
+        onCloseAutoFocus={(event) => event.preventDefault()}
+      >
+        <ul className="space-y-1">
+          {hidden.map((item) => (
+            <li key={item.id}>
+              <button
+                type="button"
+                onClick={() => {
+                  setOpen(false);
+                  if (chipRef.current) {
+                    onOpen(item.movement, chipRef.current);
+                  }
+                }}
+                className="block w-full rounded-sm px-2 py-1 text-left text-sm hover:bg-accent"
+              >
+                <span className="block truncate font-medium">
+                  {item.movement.description}
+                </span>
+                <span className="block text-xs text-muted-foreground">
+                  {`${movementTime(item.movement)} · ${signedAmount(item.movement)}`}
+                </span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      </PopoverContent>
+    </Popover>
+  );
+}
 
 export default function DayColumn({
   day,
   movements,
   isToday,
   onOpen,
-  editHref,
 }: Props) {
   const { setNodeRef, isOver } = useDroppable({ id: `day:${day}` });
 
@@ -81,41 +140,13 @@ export default function DayColumn({
         />
       ))}
       {overflow.map(({ top, hidden }) => (
-        <Popover key={`${top}-${hidden[0].id}`}>
-          <PopoverTrigger asChild>
-            <button
-              type="button"
-              className="absolute z-[5] flex items-center justify-center rounded-sm border bg-muted text-xs font-medium hover:bg-accent"
-              style={{
-                top: (top / 60) * HOUR_HEIGHT,
-                height,
-                left: `calc(${((MAX_COLUMNS - 1) / MAX_COLUMNS) * 100}% + ${GUTTER}px)`,
-                width: `calc(${100 / MAX_COLUMNS}% - ${GUTTER * 2}px)`,
-              }}
-            >
-              {`+${hidden.length}`}
-            </button>
-          </PopoverTrigger>
-          <PopoverContent className="w-64 p-2">
-            <ul className="space-y-1">
-              {hidden.map((item) => (
-                <li key={item.id}>
-                  <Link
-                    href={editHref(item.movement)}
-                    className="block rounded-sm px-2 py-1 text-sm hover:bg-accent"
-                  >
-                    <span className="block truncate font-medium">
-                      {item.movement.description}
-                    </span>
-                    <span className="block text-xs text-muted-foreground">
-                      {`${movementTime(item.movement)} · ${signedAmount(item.movement)}`}
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </PopoverContent>
-        </Popover>
+        <OverflowChip
+          key={`${top}-${hidden[0].id}`}
+          top={top}
+          hidden={hidden}
+          height={height}
+          onOpen={onOpen}
+        />
       ))}
       {isToday && <NowLine />}
     </div>

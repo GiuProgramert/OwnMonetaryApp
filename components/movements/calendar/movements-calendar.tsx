@@ -33,6 +33,7 @@ import AllDayBand from "@/components/movements/calendar/all-day-band";
 import { EventBlock } from "@/components/movements/calendar/calendar-event";
 import { DAY_LABELS } from "@/components/movements/calendar/day-labels";
 import DayColumn from "@/components/movements/calendar/day-column";
+import EventDetailsPopover from "@/components/movements/calendar/event-details-popover";
 import MobileDayStrip from "@/components/movements/calendar/mobile-day-strip";
 
 interface Props {
@@ -63,6 +64,8 @@ export default function MovementsCalendar({
   const [previousMovements, setPreviousMovements] = useState(movements);
   const [active, setActive] = useState<ActiveDrag | null>(null);
   const [bandExpanded, setBandExpanded] = useState(false);
+  const [selected, setSelected] = useState<Movement | null>(null);
+  const anchorRef = useRef<HTMLElement | null>(null);
 
   // Copia local para el movimiento optimista; se resetea cuando el server manda datos nuevos.
   if (previousMovements !== movements) {
@@ -104,27 +107,29 @@ export default function MovementsCalendar({
     (target[day] ??= []).push(movement);
   }
 
-  const editHref = (movement: Movement) => {
+  const actionHref = (movement: Movement, action: "edit" | "delete") => {
     const query = searchParams.toString();
     const returnTo = query ? `${pathname}?${query}` : pathname;
     const base = movement.transfer_id
-      ? `/protected/transfers/edit/${movement.transfer_id}`
-      : `/protected/movements/edit/${movement.id}`;
+      ? `/protected/transfers/${action}/${movement.transfer_id}`
+      : `/protected/movements/${action}/${movement.id}`;
 
     return withReturnTo(base, returnTo);
   };
 
-  const onOpen = (movement: Movement) => {
+  const onOpen = (movement: Movement, anchor: HTMLElement) => {
     // Después de un arrastre el navegador igual dispara `click` sobre el bloque.
     if (draggedRef.current) {
       return;
     }
 
-    router.push(editHref(movement));
+    anchorRef.current = anchor;
+    setSelected(movement);
   };
 
   const handleDragStart = (event: DragStartEvent) => {
     draggedRef.current = true;
+    setSelected(null);
     const data = event.active.data.current as
       { movement: Movement; compact: boolean } | undefined;
 
@@ -297,7 +302,6 @@ export default function MovementsCalendar({
                   movements={eventsByDay[day] ?? []}
                   isToday={day === today}
                   onOpen={onOpen}
-                  editHref={editHref}
                 />
               ))}
             </div>
@@ -317,6 +321,17 @@ export default function MovementsCalendar({
           )}
         </DragOverlay>
       </DndContext>
+      {selected && (
+        <EventDetailsPopover
+          key={selected.id}
+          movement={selected}
+          anchorRef={anchorRef}
+          side={isDesktop ? "right" : "bottom"}
+          onClose={() => setSelected(null)}
+          editHref={actionHref(selected, "edit")}
+          deleteHref={actionHref(selected, "delete")}
+        />
+      )}
     </div>
   );
 }

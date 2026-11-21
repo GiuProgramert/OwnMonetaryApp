@@ -281,8 +281,8 @@ test.describe("calendario de movimientos", () => {
     await column.getByRole("button", { name: "+3" }).click();
 
     const popover = page.locator("[data-radix-popper-content-wrapper]");
-    await expect(popover.getByRole("link")).toHaveCount(3);
-    await expect(popover.getByRole("link").first()).toContainText(prefix);
+    await expect(popover.getByRole("button")).toHaveCount(3);
+    await expect(popover.getByRole("button").first()).toContainText(prefix);
   });
 
   test("P.7 — arrastrar una transferencia mueve las dos patas", async ({ page }) => {
@@ -419,39 +419,6 @@ test.describe("calendario de movimientos", () => {
     await expect(page.locator(`[data-day="2026-01-07"] [data-movement-id="${id}"]`)).toBeVisible();
     await expect(page.locator(`[data-day="2026-01-09"] [data-movement-id="${id}"]`)).toHaveCount(0);
     expect(await dbDate(id)).toBe("2026-01-07T14:30:00");
-  });
-
-  test("P.12 — click abre la edición con returnTo y Guardar vuelve al calendario", async ({ page }) => {
-    const id = await insertMovement(`${prefix} click`, "2026-01-07T14:30:00");
-
-    await openCalendar(page, calendarUrl());
-    await block(page, id).click();
-    await expect(page).toHaveURL(new RegExp(`/protected/movements/edit/${id}\\?returnTo=`));
-
-    await page.getByRole("button", { name: "Guardar" }).click();
-    await expect(page).toHaveURL(/view=calendar/);
-    await expect(page).toHaveURL(new RegExp(`accountId=${accountA}`));
-    await expect(page).toHaveURL(/week=2026-01-05/);
-  });
-
-  test("P.12 — click en una transferencia abre la edición de la transferencia", async ({ page }) => {
-    const { data: transferId, error } = await supabase.rpc("create_transfer", {
-      p_from_account_id: accountA,
-      p_to_account_id: accountB,
-      p_amount: 30000,
-      p_date: "2026-01-07T12:00",
-      p_description: `${prefix} transferencia`,
-    });
-
-    if (error) {
-      throw new Error(error.message);
-    }
-
-    await openCalendar(page, calendarUrl());
-    await page.locator('[data-day="2026-01-07"] [data-movement-id]').click();
-    await expect(page).toHaveURL(
-      new RegExp(`/protected/transfers/edit/${transferId}\\?returnTo=`)
-    );
   });
 
   test("P.13 — línea de hora actual solo en la columna de hoy", async ({ page }) => {

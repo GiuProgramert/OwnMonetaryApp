@@ -11,7 +11,7 @@ interface CellProps {
   events: Movement[];
   expanded: boolean;
   onToggle: () => void;
-  onOpen: (movement: Movement) => void;
+  onOpen: (movement: Movement, anchor: HTMLElement) => void;
 }
 
 function AllDayCell({ day, events, expanded, onToggle, onOpen }: CellProps) {
@@ -56,7 +56,7 @@ interface Props {
   eventsByDay: Record<string, Movement[]>;
   expanded: boolean;
   onToggle: () => void;
-  onOpen: (movement: Movement) => void;
+  onOpen: (movement: Movement, anchor: HTMLElement) => void;
   gridTemplateColumns: string;
 }
 

@@ -195,8 +195,13 @@ fecha. Componentes en `components/movements/calendar/`, lógica pura en `lib/mov
 - **Después de soltar** se usa `revalidatePathServer` + `router.refresh()` y no
   `revalidateMyDataAndRedirect`: el redirect remonta la página y la grilla pierde el scroll
   vertical. Desvío deliberado del flujo estándar.
+- **Click:** abre `EventDetailsPopover` (`components/movements/calendar/`), un único `Popover`
+  controlado en `MovementsCalendar`, anclado con `PopoverAnchor virtualRef` porque el bloque es
+  arrastrable y no puede ser `PopoverTrigger`. Editar y Eliminar son links a las páginas existentes
+  con `returnTo` (eliminar no se hace desde el popover); la lista del chip "+N" abre el mismo
+  popover.
 - **`returnTo`:** las páginas de edición y borrado de movimientos y transferencias aceptan
-  `?returnTo=` (`resolveReturnTo`) para volver al calendario (misma semana) después de guardar; sin
+  `?returnTo=` (`resolveReturnTo`) para volver al calendario (misma semana) después de guardar o borrar; sin
   él vuelven a `/protected/movements`.
 - En `MovementsCalendar` el primer render es un `Skeleton` hasta conocer el media query
   (`hooks/use-media-query.ts`): renderizar las dos variantes duplicaría los eventos en el DOM.

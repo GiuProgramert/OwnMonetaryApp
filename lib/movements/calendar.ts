@@ -143,6 +143,18 @@ export function formatMinutes(minutes: number): string {
   return toMovementDate("", minutes).slice(1);
 }
 
+/** `"2026-01-07"` a `"Miércoles, 7 de enero"`, en hora local (nunca `new Date("YYYY-MM-DD")`). */
+export function formatEventDay(day: string): string {
+  const [year, month, date] = day.split("-").map(Number);
+  const text = new Intl.DateTimeFormat("es-PY", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  }).format(new Date(year, month - 1, date));
+
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
 export type PlacedEvent<T> = { event: T; column: number; columns: number };
 
 export type DayOverflow<T> = {

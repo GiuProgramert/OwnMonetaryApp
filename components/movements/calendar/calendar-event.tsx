@@ -74,7 +74,7 @@ export function EventBlock({ movement, compact, className, style }: BlockProps) 
 interface Props {
   movement: Movement;
   compact?: boolean;
-  onOpen: (movement: Movement) => void;
+  onOpen: (movement: Movement, anchor: HTMLElement) => void;
   className?: string;
   style?: React.CSSProperties;
 }
@@ -98,10 +98,13 @@ export default function CalendarEvent({
       {...attributes}
       data-movement-id={movement.id}
       aria-label={`${movement.description}, ${movementTime(movement)}, ${signedAmount(movement)}`}
-      onClick={() => onOpen(movement)}
+      onClick={(event) => onOpen(movement, event.currentTarget)}
+      aria-haspopup="dialog"
       onKeyDown={(event) => {
         if (event.key === "Enter") {
-          onOpen(movement);
+          // Sin esto el Enter activa el botón al que Radix mueve el foco y cierra el popover.
+          event.preventDefault();
+          onOpen(movement, event.currentTarget);
         }
       }}
       style={style}
