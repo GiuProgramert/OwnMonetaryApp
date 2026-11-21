@@ -192,3 +192,58 @@ export async function getMovementsByDebt(debtId: string) {
 
   return data as unknown as Movement[];
 }
+
+export const CALENDAR_MAX_ROWS = 1000;
+
+/**
+ * Movimientos de un rango para la vista calendario: sin paginar (la grilla necesita todos los de
+ * la semana), con el tope de `db.max_rows` de PostgREST. `truncated` avisa si hay más filas que
+ * las devueltas. No reutilizar `getMovements`: su orden es descendente y su página es fija.
+ */
+export async function getCalendarMovements({
+  accountId,
+  movementTypeId,
+  startDate,
+  endDate,
+}: {
+  accountId: string | undefined;
+  movementTypeId: string | undefined;
+  startDate: string;
+  endDate: string;
+}) {
+  const supabase = await createClient();
+  const user = await supabase.auth.getUser();
+
+  if (!user.data.user) {
+    throw new Error("User not authenticated");
+  }
+
+  let query = supabase
+    .from("movements")
+    .select(MOVEMENT_COLUMNS, { count: "exact" });
+
+  if (accountId) {
+    query = query.eq("account_id", accountId);
+  }
+
+  if (movementTypeId) {
+    query = query.eq("movement_type_id", movementTypeId);
+  }
+
+  const { data, error, count } = await query
+    .eq("accounts.user_id", user.data.user.id)
+    .gte("date", startDate)
+    // Fin de rango exclusivo (ver regla de fechas de CLAUDE.md).
+    .lt("date", nextDay(endDate))
+    .order("date", { ascending: true })
+    .order("created_at", { ascending: true })
+    .range(0, CALENDAR_MAX_ROWS - 1);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  const rows = data as unknown as Movement[];
+
+  return { data: rows, truncated: (count ?? 0) > rows.length };
+}

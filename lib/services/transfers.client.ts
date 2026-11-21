@@ -48,6 +48,38 @@ export async function updateTransfer(transferId: string, params: createTransferI
   return true;
 }
 
+/**
+ * Cambia la fecha de una transferencia (las dos patas) releyendo el resto de los campos y
+ * pasándolos por `update_transfer`.
+ */
+export async function moveTransfer(transferId: string, date: string) {
+  const supabase = createBrowserClient();
+
+  const { data, error } = await supabase
+    .from("movements")
+    .select("account_id, type, amount, description")
+    .eq("transfer_id", transferId);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  const debit = data?.find((row) => row.type === "debit");
+  const credit = data?.find((row) => row.type === "credit");
+
+  if (!data || data.length !== 2 || !debit || !credit) {
+    throw new Error("Transferencia desapareada");
+  }
+
+  return updateTransfer(transferId, {
+    from_account_id: debit.account_id,
+    to_account_id: credit.account_id,
+    amount: Number(debit.amount),
+    date,
+    description: debit.description,
+  });
+}
+
 export async function deleteTransfer(transferId: string) {
   const supabase = createBrowserClient();
 

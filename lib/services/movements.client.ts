@@ -47,6 +47,30 @@ export async function updateMovement(id: string, params: createMovement) {
   return data as unknown as Movement;
 }
 
+/**
+ * Cambia solo `date` (arrastrar en el calendario). No usar `updateMovement`: escribe el payload
+ * completo de `movementSchema`.
+ */
+export async function updateMovementDate(id: string, date: string) {
+  const supabase = createBrowserClient();
+  const parsed = movementSchema.shape.date.safeParse(date);
+
+  if (!parsed.success) {
+    throw new Error("Invalid input");
+  }
+
+  const { error } = await supabase
+    .from("movements")
+    .update({ date: parsed.data })
+    .eq("id", id);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return true;
+}
+
 export async function bulkCreateMovements(rows: createImportedMovement[]) {
   const supabase = createBrowserClient();
 

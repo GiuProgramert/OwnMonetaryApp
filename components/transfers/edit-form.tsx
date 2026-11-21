@@ -18,9 +18,10 @@ import toast from "react-hot-toast";
 interface Props {
   initialValues: Transfer;
   accounts: Pick<Account, "id" | "name" | "color">[];
+  returnTo?: string;
 }
 
-export default function EditTransferForm({ initialValues, accounts }: Props) {
+export default function EditTransferForm({ initialValues, accounts, returnTo }: Props) {
   const methods = useForm<CreateTransferInput>({
     resolver: zodResolver(transferSchema),
     defaultValues: {
@@ -47,7 +48,10 @@ export default function EditTransferForm({ initialValues, accounts }: Props) {
       return;
     }
 
-    await revalidateMyDataAndRedirect("/protected/movements");
+    await revalidateMyDataAndRedirect(
+      "/protected/movements",
+      returnTo ?? "/protected/movements"
+    );
   };
 
   return (

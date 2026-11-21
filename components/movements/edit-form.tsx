@@ -17,12 +17,14 @@ interface Props {
   initialValues: Movement;
   accounts: Pick<Account, "id" | "name" | "color">[];
   movementTypes: Pick<MovementType, "id" | "name" | "color">[];
+  returnTo?: string;
 }
 
 export default function EditMovementForm({
   initialValues,
   accounts,
   movementTypes,
+  returnTo,
 }: Props) {
   const methods = useForm<z.infer<typeof movementSchema>>({
     resolver: zodResolver(movementSchema),
@@ -51,7 +53,10 @@ export default function EditMovementForm({
       return;
     }
 
-    await revalidateMyDataAndRedirect("/protected/movements");
+    await revalidateMyDataAndRedirect(
+      "/protected/movements",
+      returnTo ?? "/protected/movements"
+    );
   };
 
   return (

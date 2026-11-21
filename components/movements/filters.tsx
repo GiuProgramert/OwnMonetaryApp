@@ -20,12 +20,14 @@ interface Props {
    * muestra solo la cuenta principal.
    */
   accountId: string;
+  view: "list" | "calendar";
 }
 
 export default function MovementsFilters({
   accounts,
   movementTypes,
   accountId,
+  view,
 }: Props) {
   const router = useRouter();
   const pathname = usePathname();
@@ -63,6 +65,20 @@ export default function MovementsFilters({
     // Limpiar = todas las cuentas, no la principal: sin `accountId` en la URL
     // el server volvería a aplicar el default, así que el "all" va explícito.
     const params = new URLSearchParams();
+
+    if (view === "calendar") {
+      // Limpiar filtros no puede sacar al usuario del calendario ni de su semana.
+      params.set("view", "calendar");
+
+      for (const key of ["week", "day"]) {
+        const value = searchParams.get(key);
+
+        if (value) {
+          params.set(key, value);
+        }
+      }
+    }
+
     params.set("accountId", allAccountsParam);
     router.push(`${pathname}?${params.toString()}`);
   };
@@ -89,11 +105,13 @@ export default function MovementsFilters({
           allLabel="Todos los tipos"
         />
       </div>
-      <DateRangeFilter
-        startDate={searchParams.get("startDate") ?? undefined}
-        endDate={searchParams.get("endDate") ?? undefined}
-        onChange={(range) => setParams(range)}
-      />
+      {view === "list" && (
+        <DateRangeFilter
+          startDate={searchParams.get("startDate") ?? undefined}
+          endDate={searchParams.get("endDate") ?? undefined}
+          onChange={(range) => setParams(range)}
+        />
+      )}
       <div>
         <Button type="button" variant="outline" onClick={clearFilters}>
           Limpiar filtros

@@ -9,8 +9,10 @@ import toast from "react-hot-toast";
 
 export default function DeleteTransferForm({
   initialValues,
+  returnTo,
 }: {
   initialValues: Transfer;
+  returnTo?: string;
 }) {
   const router = useRouter();
 
@@ -24,7 +26,10 @@ export default function DeleteTransferForm({
       return;
     }
 
-    await revalidateMyDataAndRedirect("/protected/movements");
+    await revalidateMyDataAndRedirect(
+      "/protected/movements",
+      returnTo ?? "/protected/movements"
+    );
   };
 
   return (

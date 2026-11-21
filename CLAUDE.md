@@ -176,6 +176,31 @@ Pagar y editar una deuda se abren desde el listado, el detalle o el dashboard: l
 `/protected`) y la página lo usa para la flecha "<" y para la redirección después de guardar. Sin
 el parámetro, vuelven al detalle.
 
+### Vista calendario de movimientos (`/protected/movements?view=calendar`)
+
+Vista semanal tipo Google Calendar (un día por vez en mobile) con arrastrar para cambiar la
+fecha. Componentes en `components/movements/calendar/`, lógica pura en `lib/movements/calendar.ts`
+(semana lunes a domingo, layout de bloques solapados, minutos ↔ string), drag con `@dnd-kit/core`.
+
+- **Parámetros:** `view=calendar`, `week` (cualquier `YYYY-MM-DD`, se normaliza al lunes) y `day`
+  (solo mobile). El calendario tiene su propio período e **ignora `startDate`/`endDate`**; los
+  totales de la página muestran la semana visible, y el filtro "Período" se oculta.
+- **Lectura:** `getCalendarMovements` (`lib/services/movements.ts`), sin paginar, tope 1000 filas
+  (`truncated` avisa). No usar `getMovements` (pagina de a 25, orden descendente).
+- **Escritura:** arrastrar escribe **solo** `date` con `updateMovementDate`
+  (`movements.client.ts`); nunca `updateMovement`. Las transferencias se mueven enteras con
+  `moveTransfer` (`transfers.client.ts`), que relee las dos patas y llama a `update_transfer`.
+- **00:00 = "Sin hora":** los movimientos a las 00:00 (importados) van a una banda arriba de la
+  grilla, no a la fila de medianoche. Misma convención que `formatMovementDate`.
+- **Después de soltar** se usa `revalidatePathServer` + `router.refresh()` y no
+  `revalidateMyDataAndRedirect`: el redirect remonta la página y la grilla pierde el scroll
+  vertical. Desvío deliberado del flujo estándar.
+- **`returnTo`:** las páginas de edición y borrado de movimientos y transferencias aceptan
+  `?returnTo=` (`resolveReturnTo`) para volver al calendario (misma semana) después de guardar; sin
+  él vuelven a `/protected/movements`.
+- En `MovementsCalendar` el primer render es un `Skeleton` hasta conocer el media query
+  (`hooks/use-media-query.ts`): renderizar las dos variantes duplicaría los eventos en el DOM.
+
 ### Fecha y hora de movimientos
 
 `movements.date` es `timestamp` (hora local de Paraguay, sin zona). Tres reglas: (1) todo fin de

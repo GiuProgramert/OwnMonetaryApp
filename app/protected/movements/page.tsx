@@ -3,6 +3,11 @@ import MovementsFilters from "@/components/movements/filters";
 import MovementsTotals from "@/components/movements/totals";
 import TableSkeleton from "@/components/table-skeleton";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import CalendarView from "@/components/movements/calendar/calendar-view";
+import MovementsViewToggle from "@/components/movements/calendar/view-toggle";
+import { todayInAppTimeZone } from "@/lib/dashboard/date-range";
+import { resolveCalendarWeek } from "@/lib/movements/calendar";
 import { MovementFilter } from "@/lib/schemas/movements";
 import { resolveAccountFilter } from "@/lib/accounts/primary";
 import { getAccounts } from "@/lib/services/accounts";
@@ -20,6 +25,9 @@ export default async function MovementsPage({
     startDate?: string;
     endDate?: string;
     page?: string;
+    view?: string;
+    week?: string;
+    day?: string;
   }>;
 }) {
   const rawParams = await searchParams;
@@ -38,6 +46,21 @@ export default async function MovementsPage({
     endDate: rawParams.endDate,
     page: rawParams.page ? Number(rawParams.page) : undefined,
   };
+
+  const isCalendar = rawParams.view === "calendar";
+  const today = todayInAppTimeZone();
+  const calendarWeek = isCalendar
+    ? resolveCalendarWeek({ week: rawParams.week, day: rawParams.day }, today)
+    : null;
+
+  // El calendario tiene su propio período (la semana): ignora startDate/endDate.
+  const totalsFilter: MovementFilter = calendarWeek
+    ? {
+        ...params,
+        startDate: calendarWeek.startDate,
+        endDate: calendarWeek.endDate,
+      }
+    : params;
 
   // Filtros que eligió el usuario, no el default de cuenta principal.
   const hasExplicitFilters = Boolean(
@@ -71,25 +94,46 @@ export default async function MovementsPage({
             <span>Transferir</span>
           </Link>
         </Button>
+        <MovementsViewToggle
+          view={isCalendar ? "calendar" : "list"}
+          accountParam={accountFilter.param}
+          movementTypeId={rawParams.movementTypeId}
+        />
       </div>
       <div className="space-y-6">
         <MovementsFilters
           accounts={accounts}
           movementTypes={movementTypes}
           accountId={accountFilter.param}
+          view={isCalendar ? "calendar" : "list"}
         />
         <Suspense fallback={null}>
-          <MovementsTotals filter={params} />
+          <MovementsTotals filter={totalsFilter} />
         </Suspense>
-        <div className="p-3 sm:p-4 border rounded-md bg-card">
-          <Suspense fallback={<TableSkeleton columns={6} />}>
-            <MovementsTable
-              searchParams={params}
-              accountFilter={accountFilter}
-              hasExplicitFilters={hasExplicitFilters}
+        {calendarWeek ? (
+          <Suspense
+            key={calendarWeek.startDate}
+            fallback={<Skeleton className="h-[70vh] w-full" />}
+          >
+            <CalendarView
+              accountId={accountFilter.accountId}
+              accountParam={accountFilter.param}
+              movementTypeId={rawParams.movementTypeId}
+              week={calendarWeek}
+              today={today}
             />
           </Suspense>
-        </div>
+        ) : (
+          <div className="p-3 sm:p-4 border rounded-md bg-card">
+            <Suspense fallback={<TableSkeleton columns={6} />}>
+              <MovementsTable
+                searchParams={params}
+                accountFilter={accountFilter}
+                hasExplicitFilters={hasExplicitFilters}
+              />
+            </Suspense>
+          </div>
+        )}
       </div>
     </div>
   );
