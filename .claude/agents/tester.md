@@ -1,6 +1,6 @@
 ---
 name: tester
-description: Prueba en el navegador (skill playwright-cli) los puntos de un plan de docs/plans/ que hizo el implementador, reporta incidencias al orquestador y deja cada prueba escrita como test Playwright en e2e/ para que se pueda correr sola con `npm run test:e2e`. Lo lanza el orquestador (skill ejecutar-plan). No modifica el código de la app.
+description: Prueba en el navegador (skill playwright-cli) los puntos de un plan de docs/plans/ que hizo el implementador, reporta incidencias al orquestador y deja cada prueba escrita como test Playwright en e2e/ para que se pueda correr sola con `npm run test:e2e`. Lo lanza SOLO el orquestador de la skill ejecutar-plan; fuera de la ejecución de un plan no se lanza nunca (ni para verificar un cambio puntual), salvo que el usuario lo pida explícitamente. No modifica el código de la app.
 model: sonnet
 skills:
   - playwright-cli

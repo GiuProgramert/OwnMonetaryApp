@@ -24,6 +24,8 @@ Las variables de entorno viven en `.env.local`: `NEXT_PUBLIC_SUPABASE_URL`, `NEX
 
 Las funcionalidades se planifican con la skill `escribir-plan` en `docs/plans/<feature>-implementation.md` y se ejecutan en una sesión aparte con la skill `ejecutar-plan`: la sesión actúa como **orquestador** y lanza los subagentes de `.claude/agents/` — `implementador` (Sonnet, escribe el código y marca `[x]`) y `tester` (playwright-cli, verifica en el navegador los *Criterios de prueba* del plan y escribe tests de Playwright en `e2e/`). El orquestador deriva al implementador las incidencias que encuentra el tester, mantiene el *Registro de ejecución* del plan y atiende las correcciones posteriores que pida el usuario.
 
+**El `tester` solo corre dentro de `ejecutar-plan`.** Cuando el usuario pide un cambio puntual sin plan (directo o vía otro agente), no se lanza el `tester` ni se escriben tests e2e para verificarlo, salvo que el usuario lo pida explícitamente. Alcanza con `npm run lint` / `npm run build` cuando corresponda.
+
 ## Arquitectura
 
 ### Patrón de módulo por entidad (accounts, movement-types, movements)
